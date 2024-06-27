@@ -1,0 +1,16 @@
+;;; VLisp project file [V2.0] GiveName saved to:[d:\PROJECT\LISP\GiveName] at:[27/06/2024]
+(VLISP-PROJECT-LIST 
+  :NAME
+  GiveName
+  :OWN-LIST
+  ("GiveName")
+  :FAS-DIRECTORY
+  nil
+  :TMP-DIRECTORY
+  nil
+  :PROJECT-KEYS
+  (:BUILD (:standard))
+  :CONTEXT-ID
+  :AUTOLISP
+)
+;;; EOF
