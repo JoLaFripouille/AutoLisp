@@ -12,8 +12,8 @@
   ;; Fonction pour ajouter un texte au-dessus du cercle
   (defun AddTextAboveCircle (center diameter prefix)
     (setq txt (strcat prefix " " (rtos diameter 2 2))) ; Texte à ajouter
-    (setq textHeight 2.5) ; Hauteur du texte
-    (setq textOffset 5.0) ; Décalage au-dessus du cercle
+    (setq textHeight 15) ;------------------------------------------------------ Hauteur du texte
+    (setq textOffset 5.0) ;----------------------------------------------------- Décalage au-dessus du cercle
     (setq insertionPoint (list (car center) (+ (cadr center) (/ diameter 2) textOffset) 0.0)) ; Point d'insertion du texte
     (entmake
       (list
