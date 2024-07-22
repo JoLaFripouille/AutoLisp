@@ -1,4 +1,3 @@
-Les raccourcis clavier vont changer … Le jeudi 1 août 2024, les raccourcis clavier de Drive seront modifiés pour que vous puissiez naviguer avec les premières lettresEn savoir plus
 (defun c:RBlock ( / ent blkname p1 p2)
   (princ "\nDébogage : Démarrage de la commande RBlock")
   ;; Sélectionner un bloc
