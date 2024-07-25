@@ -1,5 +1,5 @@
 DevToleDialog : dialog {
-    label = "Créer Tôle";
+    label = "Creer Tole";
     : row {
         : column {
             : edit_box {
@@ -9,7 +9,7 @@ DevToleDialog : dialog {
             }
             : edit_box {
                 key = "repere";
-                label = "Entrer le Repère de la tôle :";
+                label = "Entrer le Repere de la tole :";
                 value = "";
             }
         }
