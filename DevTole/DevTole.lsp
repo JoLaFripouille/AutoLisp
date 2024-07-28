@@ -1,4 +1,4 @@
-(defun c:DevTole (/ dcl_id length repere epaisseur pline plength pt1 pt2 pt3 pt4 dcl_path)
+﻿(defun c:DevTole (/ dcl_id length repere epaisseur pline plength pt1 pt2 pt3 pt4 dcl_path)
   ;; Définir le chemin en dur pour le fichier DCL
   (setq dcl_path "D:/PROJECT/LISP/AutoLisp/DevTole/DevTole.dcl")
   (princ (strcat "\nLe fichier DCL est situé dans le répertoire : " dcl_path))
@@ -75,6 +75,3 @@
   )
   (princ)
 )
-
-(princ "\nEntrez 'DevTole' pour exécuter le script.")
-(princ)
