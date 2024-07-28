@@ -1,0 +1,5 @@
+(defun c:HelloWorld ()
+(setq *new-variable* "D:\\PROJECT\\LISP\\AutoLisp\\DevTole\\TEST\\example.lsp")
+  (princ *new-variable*)
+  (princ)
+)
