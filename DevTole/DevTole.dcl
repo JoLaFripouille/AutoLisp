@@ -12,6 +12,11 @@ DevToleDialog : dialog {
                 label = "Entrer le Repere de la tole :";
                 value = "";
             }
+            : edit_box {
+                key = "epaisseur";
+                label = "Entrer l'epaisseur de la tole :";
+                value = "0";
+            }
         }
     }
     ok_cancel;
