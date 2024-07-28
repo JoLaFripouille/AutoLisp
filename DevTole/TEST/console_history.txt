@@ -1,0 +1,10 @@
+--- Début de l'historique de la console ---
+Commande 1 : Initialisation
+Commande 2 : Charger fichier LISP
+Commande 3 : Sélection de l'objet
+Commande 4 : Calcul de la longueur
+Commande 5 : Création du rectangle
+Commande 6 : Création du bloc
+Commande 7 : Affichage des résultats
+--- Fin de l'historique ---
+
