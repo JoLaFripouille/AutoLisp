@@ -1,6 +1,14 @@
 (defun c:DevTole (/ dcl_id length repere epaisseur pline plength pt1 pt2 pt3 pt4 dcl_path)
-  ;; Définir le chemin en dur pour le fichier DCL
-  (setq dcl_path "D:/PROJECT/LISP/AutoLisp/DevTole/DevTole.dcl")
+  ;; Définir explicitement le chemin pour le fichier LISP
+  (setq lisp_path "D:/PROJECT/LISP/AutoLisp/DevTole/TEST/DevTole.lsp")
+  (princ (strcat "\nLe fichier LISP est situé dans le répertoire : " lisp_path))
+
+  ;; Obtenir le chemin du répertoire et le nom du fichier DWG
+  (setq dwg-path (strcat (getvar "DWGPREFIX") (getvar "DWGNAME")))
+  (princ (strcat "\nLe fichier DWG est situé dans le répertoire : " dwg-path))
+
+  ;; Définir explicitement le chemin pour le fichier DCL
+  (setq dcl_path "D:/PROJECT/LISP/AutoLisp/DevTole/TEST/DevTole.dcl")
   (princ (strcat "\nLe fichier DCL est situé dans le répertoire : " dcl_path))
 
   ;; Vérifier si le fichier DCL existe
@@ -14,10 +22,6 @@
         (progn
           (princ "\nFichier DCL chargé avec succès.")
           
-          ;; Obtenir le chemin du répertoire et le nom du fichier DWG
-          (setq dwg-path (strcat (getvar "DWGPREFIX") (getvar "DWGNAME")))
-          (princ (strcat "\nLe fichier DWG est situé dans le répertoire : " dwg-path))
-
           ;; Demander à l'utilisateur de sélectionner une polyligne
           (setq pline (car (entsel "\nSélectionnez une polyligne : ")))
 
