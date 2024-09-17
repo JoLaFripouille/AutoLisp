@@ -1,1 +1,0 @@
-ce script permet de de generer une ligne de repere pour les BLOCKs qui aura pour contenu le nom du BLOCK
