@@ -93,16 +93,23 @@
   (setq j 0 pts nil) (repeat 25
     (setq pts (cons (wm:add centre (list (* radius (cos (* 2 pi (/ j 24.0)))) (* radius (sin (* 2 pi (/ j 24.0)))))) pts) j (1+ j)))
   (reverse pts))
+(defun wm:ray-near (p normal poly / ray ts e v)
+  (setq ray (wm:add p (wm:mul normal 10000.0)) ts nil)
+  (foreach e (wm:edges poly)
+    (if (setq v (wm:hit p ray (car e) (cadr e)))
+      (if (> v 1e-7) (setq ts (cons v ts)))))
+  (if ts (wm:near (wm:lerp p ray (apply 'min ts)) poly) (wm:near p poly)))
 (defun wm:terminals (/ groups rec group pts p info tangent normal sign bow anchor a b count)
   (setq groups nil wm:anchors nil sign (if (> (wm:area wm:inner) 0) 1.0 -1.0) wm:eyes 0 wm:loops 0)
   (foreach rec wm:cuts
     (setq group (assoc (cadr rec) groups))
-    (if group (setq groups (subst (list (car group) (cadr group) (cons (cadddr rec) (caddr group))) group groups))
-      (setq groups (cons (list (cadr rec) (caddr rec) (list (cadddr rec))) groups))))
+    (if group (setq groups (subst (list (car group) (cadr group) (cons (cadddr rec) (caddr group)) (nth 3 group)) group groups))
+      (setq groups (cons (list (cadr rec) (caddr rec) (list (cadddr rec)) (nth 4 rec)) groups))))
   (foreach group groups
     (setq pts (caddr group) count (length pts) p '(0.0 0.0))
     (foreach a pts (setq p (wm:add p a))) (setq p (wm:mul p (/ 1.0 count))
-      info (wm:near p wm:inner) tangent (cadr info) normal (wm:mul (list (cadr tangent) (- (car tangent))) sign))
+      info (wm:near p wm:inner) tangent (cadr info)
+      normal (if (nth 3 group) (nth 3 group) (wm:mul (list (cadr tangent) (- (car tangent))) sign)))
     (if (= (cadr group) "LOOP")
       (progn (setq anchor p wm:loops (1+ wm:loops)))
       (progn
@@ -110,8 +117,44 @@
         (setq p (wm:sub p (wm:mul normal (/ (wm:cfg 'sleeve-l) 2.0))))
         (wm:insert "JHR_WEBNET_OEIL_0150_B16_H8_3_V1" p (angle '(0.0 0.0) normal))
         (setq anchor (wm:add p (wm:mul normal 12.0)) wm:eyes (1+ wm:eyes))))
-    (setq wm:anchors (cons (list (caddr (wm:near anchor wm:inner)) anchor (cadr group)) wm:anchors))))
-(defun wm:mesh (poly / xs ys xmin xmax ymin ymax sx sy nx ny row col row0 col0 centre verts ed a b key edges nodes found neighbors v p info kind half pair)
+    (setq info (if (nth 3 group) (wm:ray-near anchor normal wm:inner) (wm:near anchor wm:inner)))
+    (setq wm:anchors (cons (list (caddr info) anchor (cadr group) (nth 3 group)) wm:anchors))))
+;; A rejected whole cell can leave a three-leg node near a frame corner.
+;; Complete only its missing diagonal, when that grid endpoint AND the entire
+;; cable fit within the inset polygon. End it with a lateral eye, not a bead.
+(defun wm:tip-normal (tip direction / edges previous e t1 t2 n1 n2 normal best bd dist)
+  (setq edges (wm:edges wm:inner) previous (car (reverse edges)) bd 1e99)
+  (foreach e edges
+    (setq t1 (wm:unit (wm:sub (cadr previous) (car previous)))
+      t2 (wm:unit (wm:sub (cadr e) (car e))) dist (distance tip (car e)))
+    (if (and (> (wm:cross t1 t2) 1e-6) (< (wm:dot t1 t2) 0.8660254)
+             (< dist bd) (<= dist (wm:len (list (wm:cfg 'ml) (wm:cfg 'mw)))))
+      (progn
+        (setq n1 (list (cadr t1) (- (car t1))) n2 (list (cadr t2) (- (car t2)))
+          normal (if (> (abs (car n1)) (abs (car n2))) n1 n2))
+        (if (> (wm:dot direction normal) 1e-6) (setq best normal bd dist))))
+    (setq previous e)) best)
+(defun wm:missing-edges (nodes poly sx sy / extra tips found p neighbors tip key normal parts a b swap)
+  (setq extra nil tips nil wm:extensions 0)
+  (if (= (wm:cfg 'corner-auto) 1)
+    (foreach found nodes
+      (if (= (length (caddr found)) 3)
+        (progn
+          (setq p (cadr found) neighbors (caddr found))
+          (foreach tip (mapcar '(lambda (v) (wm:add p v))
+            (list (list sx sy) (list sx (- sy)) (list (- sx) sy) (list (- sx) (- sy))))
+            (setq key (wm:key tip))
+            (if (and (not (assoc key nodes)) (not (member key tips))
+                (wm:inside tip poly) (setq normal (wm:tip-normal tip (wm:sub tip p)))
+                (= (length (setq parts (wm:clip p tip poly))) 1)
+                (equal (caar parts) p 1e-5) (equal (cadar parts) tip 1e-5))
+              (progn
+                (setq a p b tip)
+                (if (> (car a) (car b)) (setq swap a a b b swap))
+                (setq extra (cons (list (strcat (wm:key a) "/" (wm:key b)) a b) extra)
+                  tips (cons key tips) wm:extensions (1+ wm:extensions)
+                  wm:cuts (cons (list key key "EYE" tip normal) wm:cuts))))))))) extra)
+(defun wm:mesh (poly / xs ys xmin xmax ymin ymax sx sy nx ny row col row0 col0 centre verts ed a b key edges nodes found neighbors v p info kind half pair extra)
   (setq xs (mapcar 'car poly) ys (mapcar 'cadr poly) xmin (apply 'min xs) xmax (apply 'max xs) ymin (apply 'min ys) ymax (apply 'max ys)
     sx (/ (wm:cfg 'ml) 2.0) sy (/ (wm:cfg 'mw) 2.0)
     nx (+ 4 (fix (/ (- xmax xmin) sx))) ny (+ 4 (fix (/ (- ymax ymin) sy))) edges nil nodes nil)
@@ -139,7 +182,8 @@
                     (if found (setq nodes (subst (list key p (cons (cadr pair) (caddr found))) found nodes))
                       (setq nodes (cons (list key p (list (cadr pair))) nodes))))))))))
       (setq col (1+ col))) (setq row (1+ row)))
-  (setq half (/ (wm:cfg 'sleeve-l) 2.0))
+  (setq extra (wm:missing-edges nodes poly sx sy) edges (append extra edges)
+    half (/ (wm:cfg 'sleeve-l) 2.0))
   (foreach ed edges
     (setq a (wm:add (cadr ed) (list half 0.0)) b (wm:sub (caddr ed) (list half 0.0)))
     (wm:draw (wm:bezier a (wm:add a '(8.0 0.0)) (wm:sub b '(8.0 0.0)) b) (wm:cfg 'wire) nil))
@@ -202,7 +246,7 @@
 ;; Bridge the side / top (or bottom) behind the frame, without an extra turn
 ;; around its outside corner. The eye leg is in front, the other leg behind.
 ;; Both visible fragments belong to one conceptual lacing path.
-(defun wm:corner-lace (pair corner / start delta f1 f2 q s t1 t2 det v r rail front rear p np rad a b qo so stub-end stub-start stub-width)
+(defun wm:corner-lace (pair corner / start delta f1 f2 q s t1 t2 det v r rail front rear p np rad a b qo so bridge)
   (setq start (caar pair) delta (cadddr corner)
     f1 (wm:frame-at (+ start (* delta 0.5)))
     f2 (wm:frame-at (+ start delta (* (- wm:pitch delta) 0.5))))
@@ -227,6 +271,23 @@
             (progn
               (setq p (cadar pair) np (cadadr pair)
                 qo (cadddr f1) so (cadddr f2))
+              (if (or (and (= (caddar pair) "EYE") (nth 3 (car pair)))
+                      (and (= (caddr (cadr pair)) "EYE") (nth 3 (cadr pair))))
+                (progn
+                  ;; The new eye already receives the lateral lacing from the
+                  ;; preceding interval. This interval MUST go to the top/bottom
+                  ;; face, not return a second time to the same lateral face.
+                  (setq bridge (wm:frame-at (caddr (wm:near (wm:lerp p np 0.5) wm:inner))))
+                  (if (and bridge (> (abs (car (cadr bridge))) 0.7071))
+                    (setq bridge (cadddr bridge))
+                    (setq bridge (if (= (caddar pair) "EYE") so qo)))
+                  (if (= (caddar pair) "EYE")
+                    (setq front (wm:bezier p (wm:lerp p bridge 0.3) (wm:lerp p bridge 0.7) bridge)
+                      rear (list bridge np))
+                    (setq front (wm:bezier bridge (wm:lerp bridge np 0.3) (wm:lerp bridge np 0.7) np)
+                      rear (list p bridge)))
+                  (wm:draw front (wm:cfg 'lace) nil) (wm:back rear))
+                (progn
               (if (= (caddar pair) "EYE")
                 (setq front (wm:bezier p (wm:lerp p qo 0.3) (wm:lerp p qo 0.7) qo)
                   rear (wm:bezier so
@@ -243,6 +304,7 @@
               ;; through the tube. Its length follows the measured frame width.
               (wm:draw (list (car rear) (cadr rear) (caddr rear)) (wm:cfg 'lace) nil)
               (wm:back (append (list qo) rail (list so))) (wm:back rear)
+                ))
               (setq wm:corners (1+ wm:corners)) T)))))))
 (defun wm:lace (poly / anchors pair p nextp info normal tangent outerp ray ts v sign index pitch per phase edge1 edge2 radius rise arc peak side width turn-info normal-p normal-next h hp hn front-path back-path k e corner)
   (setq anchors (vl-sort wm:anchors '(lambda (a b) (< (car a) (car b))))
@@ -269,8 +331,8 @@
       rise (* radius (if side 0.85 0.50))
       edge1 (wm:sub outerp (wm:mul tangent radius)) edge2 (wm:add outerp (wm:mul tangent radius))
       peak (wm:add outerp (wm:mul normal rise))
-      info (wm:near p wm:inner) normal-p (wm:mul (list (cadr (cadr info)) (- (car (cadr info)))) sign)
-      info (wm:near nextp wm:inner) normal-next (wm:mul (list (cadr (cadr info)) (- (car (cadr info)))) sign)
+      info (wm:near p wm:inner) normal-p (if (nth 3 (car pair)) (nth 3 (car pair)) (wm:mul (list (cadr (cadr info)) (- (car (cadr info)))) sign))
+      info (wm:near nextp wm:inner) normal-next (if (nth 3 (cadr pair)) (nth 3 (cadr pair)) (wm:mul (list (cadr (cadr info)) (- (car (cadr info)))) sign))
       h (min (* width 0.35) (* pitch 0.22))
       hp (min (* width 0.16) (* (distance p outerp) 0.12))
       hn (min (* width 0.16) (* (distance nextp outerp) 0.12)))
@@ -377,9 +439,9 @@
     (cons 1040 (wm:cfg 'wire)) (cons 1040 (wm:cfg 'lace)) (cons 1040 (wm:cfg 'mw)) (cons 1040 (wm:cfg 'ml))
     (cons 1005 (cdr (assoc 5 (entget inside)))) (cons 1005 (cdr (assoc 5 (entget outside)))))))))
   (setq *wm:last* ins)
-  (princ (strcat "\n" name " : " (itoa wm:nodes) " douilles de maille, " (itoa wm:boundary) " raccords de rive, " (itoa wm:corners) " transitions d angle. Tout le contenu est sur le calque 0.")) ins)
+  (princ (strcat "\n" name " : " (itoa wm:nodes) " douilles de maille, " (itoa wm:boundary) " raccords de rive, " (itoa wm:corners) " transitions d angle, " (itoa wm:extensions) " brins avec oeillet ajoutes. Tout le contenu est sur le calque 0.")) ins)
 (defun wm:cleanup () (foreach o wm:temps (vl-catch-all-apply 'vla-Delete (list o))) (setq wm:temps nil))
-(defun c:JHRMAILLE (/ *error* doc inside outside result wm:temps wm:origin wm:angle wm:inner wm:outer wm:netpoly wm:shapes wm:anchors wm:nodes wm:boundary wm:bead wm:cuts wm:eyes wm:loops wm:corners wm:pitch begun wm:reason wm:changed)
+(defun c:JHRMAILLE (/ *error* doc inside outside result wm:temps wm:origin wm:angle wm:inner wm:outer wm:netpoly wm:shapes wm:anchors wm:nodes wm:boundary wm:bead wm:cuts wm:eyes wm:loops wm:corners wm:extensions wm:pitch begun wm:reason wm:changed)
   (defun *error* (msg)
     (wm:cleanup) (if begun (vla-EndUndoMark doc))
     (if wm:reason (princ (strcat "\nMaille non creee : " wm:reason)))
