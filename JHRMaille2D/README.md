@@ -28,6 +28,7 @@ Les paramètres sont mémorisés pour la session AutoCAD en cours.
 | Largeur de douille dessinée | 5,7 mm | Représentation de la douille |
 | Direction de la grande diagonale | 0° | Orientation de la maille |
 | Pas des petites butées de rive | 12 | Nombre de raccords entre occurrences, pas une distance en mm |
+| Raccords d angle | Auto | Transition automatique entre une rive latérale et une rive haute ou basse |
 
 Ces valeurs sont des réglages de dessin, à remplacer par les dimensions du filet et des accessoires retenus pour le projet. La diagonale entre centres n’est pas l’ouverture libre entre câbles.
 
@@ -51,6 +52,16 @@ Le fichier utilise Visual LISP / ActiveX et vise **AutoCAD pour Windows**. Une u
 
 Les douilles, œillets et butées sont des **représentations graphiques**, pas des gabarits de fabrication ou de sertissage. Certains noms techniques internes historiques contiennent `WEBNET` ; ils ne constituent pas une certification ni une identification du fournisseur du projet.
 
-## Vérification de cette publication
+## Raccords automatiques aux angles
 
-Version publiée le 2 octobre 2026, identique au fichier de travail validé visuellement lors de la mise au point. Avant publication : contrôle de l’identité du fichier, de l’équilibrage des expressions AutoLISP et des deux commandes publiques. Aucun nouvel essai natif AutoCAD n’a été effectué pour cette seule publication.
+Dans `JHRMAILLEPARAM`, le choix **Raccords d angle [Auto/Classique]** vaut **Auto** par défaut. L'utilisation reste la même : sélectionner le contour intérieur fermé, puis le contour extérieur fermé avec `JHRMAILLE`.
+
+Le script recherche un seul angle convexe de plus de 30 degrés entre deux attaches consécutives, lorsque la rive passe d'un œillet latéral à une boucle supérieure ou inférieure. Il remplace alors le retour supplémentaire au coin par une transition du laçage d'une face du cadre à l'autre. La largeur locale mesurée entre les deux contours détermine le passage et la petite portion visible sur la face horizontale ; les parties derrière le cadre sont masquées dans la représentation 2D.
+
+Les losanges et les accessoires restent identiques. Les rives droites, les courbes échantillonnées, les angles rentrants et les transitions entre attaches du même type conservent leur raccord classique. Si le passage calculé ne tient pas dans la section du cadre, le script conserve également le retour classique. Le message final indique le nombre de transitions d'angle effectivement appliquées.
+
+Pour revenir au dessin précédent, choisir **Classique** puis générer un nouveau panneau. Recharger le LISP avec `APPLOAD` après une mise à jour. Les blocs déjà créés sont statiques : ils restent inchangés ; recréer leur remplissage à partir des deux contours conservés pour utiliser le nouveau raccord. Aucun remplacement de panneau existant n'est effectué automatiquement.
+
+Ce raccord est une représentation graphique du laçage ; il ne modifie pas le mode de fixation ni les prescriptions de sertissage du fabricant.
+
+Contrôles natifs du 2 octobre 2026 : cadres de 20, 50 et 80 mm, trapèze et cadre tourné, quatre transitions par cas ; contour courbe et mode Classique, zéro transition. Les rectangles conservent leurs 213 douilles, 24 œillets et 18 boucles. Les câbles de maille et les accessoires sont géométriquement identiques entre Auto et Classique. Un essai de la commande complète valide aussi l'offset et la conservation exacte des deux contours. Exemple enregistré : `Exemple_Maille_2D_angles_automatiques.dwg` ; comparaison visuelle : `Comparaison_angles_automatiques.png`.
