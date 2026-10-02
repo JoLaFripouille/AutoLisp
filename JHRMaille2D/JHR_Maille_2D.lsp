@@ -7,6 +7,9 @@
   (setq *wm:cfg* '((mw . 60.0) (ml . 104.0) (wire . 1.5) (lace . 2.0)
     (gap . 20.0) (sleeve-l . 5.5) (sleeve-h . 5.7) (angle . 0.0)
     (stops . 12) (maxnodes . 15000))))
+;; Preserve session settings when reloading an older configuration.
+(if (not (assoc 'corner-auto *wm:cfg*))
+  (setq *wm:cfg* (append *wm:cfg* '((corner-auto . 1)))))
 (defun wm:fail (msg) (setq wm:reason msg) (exit))
 (defun wm:floor (x) (if (< x (fix x)) (1- (fix x)) (fix x)))
 (defun wm:cfg (k) (cdr (assoc k *wm:cfg*)))
@@ -166,13 +169,91 @@
     (if (not out) (progn (setq a (car e) b (cadr e) len (distance a b))
       (if (<= chain len) (setq out (list (wm:lerp a b (/ chain len)) (wm:unit (wm:sub b a))))
         (setq chain (- chain len)))))) out)
-(defun wm:lace (poly / anchors pair p nextp info normal tangent outerp ray ts v sign index pitch per phase edge1 edge2 radius rise arc peak side width turn-info normal-p normal-next h hp hn front-path back-path k e)
+;; Find exactly one real convex corner between consecutive perimeter anchors.
+;; Small turns from tessellated arcs, concave corners and like terminals retain
+;; the classic lacing. Chain distances also handle the closing polygon edge.
+(defun wm:corner (pair per / edges previous e chain delta hits t1 t2)
+  (if (and (= (wm:cfg 'corner-auto) 1)
+           (/= (caddar pair) (caddr (cadr pair))))
+    (progn
+      (setq edges (wm:edges wm:inner) previous (car (reverse edges)) chain 0.0 hits nil)
+      (foreach e edges
+        (setq delta (rem (+ (- chain (caar pair)) per) per)
+          t1 (wm:unit (wm:sub (cadr previous) (car previous)))
+          t2 (wm:unit (wm:sub (cadr e) (car e))))
+        (if (and (> delta 1e-5) (< delta (- wm:pitch 1e-5))
+                 (< (wm:dot t1 t2) 0.8660254))
+          (setq hits (cons (list (car e) t1 t2 delta
+            (> (wm:cross t1 t2) 1e-6)) hits)))
+        (setq chain (+ chain (distance (car e) (cadr e))) previous e))
+      (if (and (= (length hits) 1) (nth 4 (car hits))) (car hits)))))
+;; Measure the frame locally, independent of tube width and polygon rotation.
+(defun wm:frame-at (chain / info n ray ts e v outer)
+  (setq info (wm:at chain wm:inner)
+    n (list (cadr (cadr info)) (- (car (cadr info))))
+    ray (wm:add (car info) (wm:mul n 10000.0)) ts nil)
+  (foreach e (wm:edges wm:outer)
+    (if (setq v (wm:hit (car info) ray (car e) (cadr e)))
+      (if (> v 1e-7) (setq ts (cons v ts)))))
+  (if ts
+    (progn (setq outer (wm:lerp (car info) ray (apply 'min ts)))
+      (list (wm:lerp (car info) outer 0.5) (cadr info)
+        (distance (car info) outer) outer))))
+;; Bridge the side / top (or bottom) behind the frame, without an extra turn
+;; around its outside corner. The eye leg is in front, the other leg behind.
+;; Both visible fragments belong to one conceptual lacing path.
+(defun wm:corner-lace (pair corner / start delta f1 f2 q s t1 t2 det v r rail front rear p np rad a b qo so stub-end stub-start stub-width)
+  (setq start (caar pair) delta (cadddr corner)
+    f1 (wm:frame-at (+ start (* delta 0.5)))
+    f2 (wm:frame-at (+ start delta (* (- wm:pitch delta) 0.5))))
+  (if (and f1 f2)
+    (progn
+      (setq q (car f1) s (car f2) t1 (cadr f1) t2 (cadr f2)
+        det (wm:cross t1 t2))
+      (if (> (abs det) 1e-8)
+        (progn
+          (setq v (/ (wm:cross (wm:sub s q) t2) det)
+            r (wm:add q (wm:mul t1 v))
+            rad (min (* 0.15 (min (caddr f1) (caddr f2)))
+              (* 0.3 (distance q r)) (* 0.3 (distance r s)))
+            a (wm:sub r (wm:mul t1 rad)) b (wm:add r (wm:mul t2 rad))
+            rail (append (list q) (wm:bezier a
+              (wm:add a (wm:mul t1 (* rad 0.55)))
+              (wm:sub b (wm:mul t2 (* rad 0.55))) b) (list s)))
+          ;; A narrow or irregular outer contour can invalidate this bridge.
+          ;; In that case use the original return; never draw through the net.
+          (if (vl-every '(lambda (a) (and (wm:inside a wm:outer)
+                                         (not (wm:inside a wm:inner)))) rail)
+            (progn
+              (setq p (cadar pair) np (cadadr pair)
+                qo (cadddr f1) so (cadddr f2))
+              (if (= (caddar pair) "EYE")
+                (setq front (wm:bezier p (wm:lerp p qo 0.3) (wm:lerp p qo 0.7) qo)
+                  rear (wm:bezier so
+                    (wm:add so (wm:add (wm:mul t2 (* 0.6 (caddr f2)))
+                      (wm:mul (list (cadr t2) (- (car t2))) (* -0.08 (caddr f2)))))
+                    (wm:lerp so np 0.7) np))
+                (setq front (wm:bezier so (wm:lerp so np 0.3) (wm:lerp so np 0.7) np)
+                  rear (wm:bezier qo
+                    (wm:add qo (wm:add (wm:mul t1 (* -0.6 (caddr f1)))
+                      (wm:mul (list (cadr t1) (- (car t1))) (* -0.08 (caddr f1)))))
+                    (wm:lerp qo p 0.7) p)))
+              (wm:draw front (wm:cfg 'lace) nil)
+              ;; Short visible crossing on the horizontal face, then hidden
+              ;; through the tube. Its length follows the measured frame width.
+              (wm:draw (list (car rear) (cadr rear) (caddr rear)) (wm:cfg 'lace) nil)
+              (wm:back (append (list qo) rail (list so))) (wm:back rear)
+              (setq wm:corners (1+ wm:corners)) T)))))))
+(defun wm:lace (poly / anchors pair p nextp info normal tangent outerp ray ts v sign index pitch per phase edge1 edge2 radius rise arc peak side width turn-info normal-p normal-next h hp hn front-path back-path k e corner)
   (setq anchors (vl-sort wm:anchors '(lambda (a b) (< (car a) (car b))))
-    index 0 wm:boundary (length anchors) sign (if (> (wm:area wm:inner) 0) 1.0 -1.0) per 0.0 k 0.55228475)
+    index 0 wm:corners 0 wm:boundary (length anchors) sign (if (> (wm:area wm:inner) 0) 1.0 -1.0) per 0.0 k 0.55228475)
   (foreach e (wm:edges wm:inner) (setq per (+ per (distance (car e) (cadr e)))))
   (foreach pair (mapcar 'list anchors (append (cdr anchors) (list (car anchors))))
     (setq p (cadar pair) nextp (cadadr pair) pitch (- (caadr pair) (caar pair)))
     (if (<= pitch 0) (setq pitch (+ pitch per)))
+    (setq wm:pitch pitch corner (wm:corner pair per))
+    (if (not (and corner (wm:corner-lace pair corner)))
+      (progn
     (setq phase (+ (caar pair) (* 0.46 pitch)) info (wm:at phase wm:inner) tangent (cadr info)
       normal (wm:mul (list (cadr tangent) (- (car tangent))) sign)
       ray (wm:add (car info) (wm:mul normal 10000.0)) ts nil)
@@ -208,6 +289,7 @@
     (wm:draw (append (if side arc (reverse arc)) (cdr front-path)) (wm:cfg 'lace) nil)
     (if (and (= (caddar pair) "EYE") (= (rem index (wm:cfg 'stops)) 0))
       (wm:insert "JHR_WEBNET_BUTEE_4x4_V1" (wm:lerp p edge1 0.16) (angle p edge1)))
+    ))
     (setq index (1+ index))))
 (defun wm:block (name shapes / data)
   (if (tblsearch "BLOCK" name) (wm:fail "Nom de bloc deja utilise."))
@@ -295,9 +377,9 @@
     (cons 1040 (wm:cfg 'wire)) (cons 1040 (wm:cfg 'lace)) (cons 1040 (wm:cfg 'mw)) (cons 1040 (wm:cfg 'ml))
     (cons 1005 (cdr (assoc 5 (entget inside)))) (cons 1005 (cdr (assoc 5 (entget outside)))))))))
   (setq *wm:last* ins)
-  (princ (strcat "\n" name " : " (itoa wm:nodes) " douilles de maille, " (itoa wm:boundary) " raccords de rive. Tout le contenu est sur le calque 0.")) ins)
+  (princ (strcat "\n" name " : " (itoa wm:nodes) " douilles de maille, " (itoa wm:boundary) " raccords de rive, " (itoa wm:corners) " transitions d angle. Tout le contenu est sur le calque 0.")) ins)
 (defun wm:cleanup () (foreach o wm:temps (vl-catch-all-apply 'vla-Delete (list o))) (setq wm:temps nil))
-(defun c:JHRMAILLE (/ *error* doc inside outside result wm:temps wm:origin wm:angle wm:inner wm:outer wm:netpoly wm:shapes wm:anchors wm:nodes wm:boundary wm:bead wm:cuts wm:eyes wm:loops begun wm:reason wm:changed)
+(defun c:JHRMAILLE (/ *error* doc inside outside result wm:temps wm:origin wm:angle wm:inner wm:outer wm:netpoly wm:shapes wm:anchors wm:nodes wm:boundary wm:bead wm:cuts wm:eyes wm:loops wm:corners wm:pitch begun wm:reason wm:changed)
   (defun *error* (msg)
     (wm:cleanup) (if begun (vla-EndUndoMark doc))
     (if wm:reason (princ (strcat "\nMaille non creee : " wm:reason)))
@@ -315,7 +397,7 @@
 (defun wm:ask (k label / val)
   (initget 6) (setq val (getreal (strcat "\n" label " <" (rtos (wm:cfg k) 2 2) "> : ")))
   (if val (wm:set k val)))
-(defun c:JHRMAILLEPARAM (/ a n)
+(defun c:JHRMAILLEPARAM (/ a n mode)
   (foreach item '((mw "Petite diagonale centre / centre (mm)") (ml "Grande diagonale centre / centre (mm)")
       (wire "Diametre cable de maille (mm)") (lace "Diametre cable de lacage (mm)") (gap "Retrait filet / face interieure du cadre (mm)")
       (sleeve-l "Longueur dessinee de la douille (mm)") (sleeve-h "Largeur dessinee de la douille (mm)"))
@@ -323,6 +405,11 @@
   (setq a (getangle (strcat "\nDirection de la grande diagonale <" (rtos (* 180.0 (/ (wm:cfg 'angle) pi)) 2 1) " deg> : ")))
   (if a (wm:set 'angle (+ a (angle '(0 0 0) (trans '(1 0 0) 1 0 T)))))
   (initget 6) (setq n (getint (strcat "\nPas des petites butees de rive <" (itoa (wm:cfg 'stops)) "> : ")))
-  (if n (wm:set 'stops n)) (princ "\nParametres memorises pour cette session. Lancer JHRMAILLE.") (princ))
+  (if n (wm:set 'stops n))
+  (initget "Auto Classique")
+  (setq mode (getkword (strcat "\nRaccords d angle [Auto/Classique] <"
+    (if (= (wm:cfg 'corner-auto) 1) "Auto" "Classique") "> : ")))
+  (if mode (wm:set 'corner-auto (if (= mode "Auto") 1 0)))
+  (princ "\nParametres memorises pour cette session. Lancer JHRMAILLE.") (princ))
 (princ "\nJHRMAILLE : interieur puis exterieur. JHRMAILLEPARAM : diametres, maille, retrait et orientation.")
 (princ)
