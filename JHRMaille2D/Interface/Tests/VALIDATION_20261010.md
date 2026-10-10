@@ -13,3 +13,7 @@
 - Tous les dessins ouverts rechargent le LISP sans variation de leurs nombres d’objets ni de leurs états de sauvegarde. Les essais de création concernent uniquement le nouveau DWG.
 
 Les tests autonomes sont dans Program.cs. La comparaison des fonctions est effectuée sur les expressions LISP complètes, commentaires et blancs normalisés. Les pilotes natifs de la machine d’essai restent locaux ; ils ne sont pas exécutés à l’installation de la commande.
+
+## Interface 1.2 — colonne d’outils
+
+Ajout de la navigation à gauche et du nom Filet inox losange. Compilation sans erreur ni avertissement. Les contrôles des 202 références et des fermetures passent ; cliquer sur l’outil conserve les valeurs et la fenêtre. Contrôle visuel de la fenêtre autonome et de la vraie fenêtre AutoCAD. Valider, Annuler, croix et Échap passent dans AutoCAD. Aucun calcul de géométrie modifié ; seuls le nom de la DLL et les fonctions de chargement changent dans le LISP. Les nombres d’objets et états de sauvegarde des autres dessins restent identiques ; seul le DWG de test est enregistré après le chargement du nouveau complément.

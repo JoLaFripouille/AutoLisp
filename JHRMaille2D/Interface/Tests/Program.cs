@@ -54,6 +54,15 @@ static class Program
  {
   ApplicationConfiguration.Initialize();string output=args[0];Directory.CreateDirectory(output);
   var s=new MeshSettings();Check(s.Validate()==null,"Valeurs existantes acceptées");
+  using(var f=new MeshForm(s)){
+   var nav=Field<ToolNavigation>(f,"navigation");
+   Check(nav.SelectedKey=="filet-inox-losange","L’outil Filet inox losange est sélectionné à l’ouverture");
+   var buttons=Field<Dictionary<string,Button>>(nav,"buttons");
+   Check(buttons.Count==1&&buttons.Values.Single().Text=="Filet inox losange","Une colonne d’outils avec le nom demandé");
+   using var timer=new System.Windows.Forms.Timer{Interval=100};
+   timer.Tick+=(_,_)=>{timer.Stop();buttons.Values.Single().PerformClick();Check(f.Visible&&Field<MeshPreview>(f,"preview").Settings==s,"Cliquer sur l’outil conserve la fenêtre et les réglages");f.CancelButton!.PerformClick();};timer.Start();
+   Check(f.ShowDialog()==DialogResult.Cancel&&f.Settings==s,"La navigation conserve l’annulation");
+  }
   CatalogueTests(s,output);
   Check((s with{Wire=20}).Validate()!=null,"Câble trop gros refusé");Check((s with{Width=2,Woven=true}).Validate()!=null,"Jonction tressée trop grande refusée");
   Check((s with{Width=double.NaN}).Validate()!=null,"Valeur non finie refusée");

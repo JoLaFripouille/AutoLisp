@@ -3,6 +3,7 @@ public sealed class MeshForm : Form
 {
     public MeshSettings Settings {get;private set;}
     readonly MeshSettings initial;
+    readonly ToolNavigation navigation=new(){Dock=DockStyle.Fill};
     readonly MeshPreview preview=new(){Dock=DockStyle.Fill};
     readonly ComboBox mode=new(){DropDownStyle=ComboBoxStyle.DropDownList,Dock=DockStyle.Fill};
     readonly Dictionary<string,NumericUpDown> numbers=new();
@@ -19,14 +20,18 @@ public sealed class MeshForm : Form
     bool setting;
     public MeshForm(MeshSettings s)
     {
-        initial=s;Settings=s;Text="JHR · Maille inox 2D";Font=new Font("Segoe UI",10);
-        AutoScaleMode=AutoScaleMode.Dpi;ClientSize=new(1160,860);MinimumSize=new(1040,740);
+        initial=s;Settings=s;Text="JHRMAILLE · Outils de remplissage";Font=new Font("Segoe UI",10);
+        AutoScaleMode=AutoScaleMode.Dpi;ClientSize=new(1370,860);MinimumSize=new(1200,740);
         StartPosition=FormStartPosition.CenterParent;BackColor=Color.FromArgb(244,247,246);
         MinimizeBox=false;MaximizeBox=true;ShowInTaskbar=false;
+        var shell=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Margin=Padding.Empty};
+        shell.ColumnStyles.Add(new(SizeType.Absolute,210));shell.ColumnStyles.Add(new(SizeType.Percent,100));
+        shell.RowStyles.Add(new(SizeType.Percent,100));Controls.Add(shell);
+        navigation.AddTool("filet-inox-losange","Filet inox losange");shell.Controls.Add(navigation,0,0);
         var layout=new TableLayoutPanel{Dock=DockStyle.Fill,Padding=new(20),ColumnCount=2,RowCount=3};
         layout.ColumnStyles.Add(new(SizeType.Absolute,410));layout.ColumnStyles.Add(new(SizeType.Percent,100));
-        layout.RowStyles.Add(new(SizeType.Absolute,65));layout.RowStyles.Add(new(SizeType.Percent,100));layout.RowStyles.Add(new(SizeType.Absolute,86));Controls.Add(layout);
-        var title=new Label{Text="Configurer la maille",Font=new Font(Font.FontFamily,18,FontStyle.Bold),AutoSize=true};
+        layout.RowStyles.Add(new(SizeType.Absolute,65));layout.RowStyles.Add(new(SizeType.Percent,100));layout.RowStyles.Add(new(SizeType.Absolute,86));shell.Controls.Add(layout,1,0);
+        var title=new Label{Text="Filet inox losange",Font=new Font(Font.FontFamily,18,FontStyle.Bold),AutoSize=true};
         layout.Controls.Add(title,0,0);layout.SetColumnSpan(title,2);
         var fields=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,AutoScroll=true,Padding=new(0,0,16,0)};
         fields.ColumnStyles.Add(new(SizeType.Percent,57));fields.ColumnStyles.Add(new(SizeType.Percent,43));layout.Controls.Add(fields,0,1);

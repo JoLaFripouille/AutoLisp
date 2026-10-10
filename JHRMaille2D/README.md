@@ -1,4 +1,4 @@
-# JHRMAILLE 1.1 — maille inox détaillée en 2D
+# JHRMAILLE 1.2 — maille inox détaillée en 2D
 
 Commande AutoLISP pour créer un remplissage de câbles en losanges et son laçage autour d’un cadre. L’interface propose un aperçu des torons, les jonctions avec bagues ou tressées sans douilles et les références losangées du catalogue Jakob Webnet.
 
@@ -6,14 +6,18 @@ Commande AutoLISP pour créer un remplissage de câbles en losanges et son laça
 
 ## Installation
 
-Télécharger le dossier complet **JHRMaille2D** du dépôt, ou l’archive du dépôt : le LISP seul ne contient pas l’interface. Les deux fichiers nécessaires sont `JHR_Maille_2D.lsp` et `JhrMailleUi_v1_1.dll`.
+Télécharger le dossier complet **JHRMaille2D** du dépôt, ou l’archive du dépôt : le LISP seul ne contient pas l’interface. Les deux fichiers nécessaires sont `JHR_Maille_2D.lsp` et `JhrMailleUi_v1_2.dll`.
 
 1. Dans AutoCAD pour Windows, charger `JHR_Maille_2D.lsp` avec **APPLOAD**.
-2. Charger `JhrMailleUi_v1_1.dll` avec **NETLOAD**. Cette étape n’est pas nécessaire si le dossier est déjà dans les chemins de recherche et que le LISP trouve la DLL automatiquement.
+2. Charger `JhrMailleUi_v1_2.dll` avec **NETLOAD**. Cette étape n’est pas nécessaire si le dossier est déjà dans les chemins de recherche et que le LISP trouve la DLL automatiquement.
 3. Respecter les règles de sécurité de l’installation. L’outil ne modifie pas SECURELOAD ou TRUSTEDPATHS.
 4. Lancer **JHRMAILLEPARAM** pour vérifier que la fenêtre s’ouvre, puis **JHRMAILLE** pour créer un panneau.
 
 La DLL est compilée et testée pour **AutoCAD / Advance Steel 2027, Windows 64 bits, .NET 10**. Sur une autre version, utiliser **JHRMAILLECLI** et **JHRMAILLEPARAMCLI**, ou recompiler l’interface avec le SDK correspondant. La compatibilité ARES, Mac et autres moteurs LISP n’est pas validée.
+
+## Navigation entre les outils
+
+La colonne à gauche regroupe les outils de **JHRMAILLE**. Le premier outil s’appelle **Filet inox losange** et est sélectionné à l’ouverture. Ses paramètres restent au centre et son aperçu à droite. Cliquer sur l’outil sélectionné conserve les valeurs et laisse la fenêtre ouverte. La colonne est prévue pour accueillir les futurs outils ; cette version ne propose que Filet inox losange.
 
 ## Dessiner un panneau
 

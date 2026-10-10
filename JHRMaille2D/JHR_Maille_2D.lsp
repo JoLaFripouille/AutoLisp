@@ -14,7 +14,7 @@
 (if (not (assoc 'woven *wm:cfg*)) (setq *wm:cfg* (append *wm:cfg* '((woven . 0)))))
 ;; Portable folder lookup; manual NETLOAD also works without a support path.
 (setq *wm:ui-root* (cond
-  ((findfile "JhrMailleUi_v1_1.dll") (vl-filename-directory (findfile "JhrMailleUi_v1_1.dll")))
+  ((findfile "JhrMailleUi_v1_2.dll") (vl-filename-directory (findfile "JhrMailleUi_v1_2.dll")))
   ((findfile "JHR_Maille_2D.lsp") (vl-filename-directory (findfile "JHR_Maille_2D.lsp")))
   (*wm:ui-root* *wm:ui-root*) (T nil)))
 (defun wm:tail (n items) (repeat n (setq items (cdr items))) items)
@@ -630,16 +630,16 @@
   (if mode (wm:set 'corner-auto (if (= mode "Auto") 1 0)))
   (princ "\nParametres memorises pour cette session. Lancer JHRMAILLE.") (princ))
 (defun wm:ui (/ dll result keys vals product)
- (if (not (member "JHR:MAILLE-DIALOG-V110" (atoms-family 1)))
+ (if (not (member "JHR:MAILLE-DIALOG-V120" (atoms-family 1)))
   (progn
-   (setq dll (if *wm:ui-root* (strcat *wm:ui-root* "/JhrMailleUi_v1_1.dll") (findfile "JhrMailleUi_v1_1.dll")))
+   (setq dll (if *wm:ui-root* (strcat *wm:ui-root* "/JhrMailleUi_v1_2.dll") (findfile "JhrMailleUi_v1_2.dll")))
    (if (or (not dll) (not (findfile dll)))
-    (wm:fail "Interface absente. NETLOAD JhrMailleUi_v1_1.dll du dossier complet, ou utiliser JHRMAILLECLI."))
+    (wm:fail "Interface absente. NETLOAD JhrMailleUi_v1_2.dll du dossier complet, ou utiliser JHRMAILLECLI."))
    (command-s "_.NETLOAD" dll)))
- (if (not (member "JHR:MAILLE-DIALOG-V110" (atoms-family 1)))
+ (if (not (member "JHR:MAILLE-DIALOG-V120" (atoms-family 1)))
   (wm:fail "Interface non chargee. Verifier le chargement .NET, ou utiliser JHRMAILLECLI."))
  (setq product (wm:product-current))
- (setq result (jhr:maille-dialog-v110 (wm:cfg 'ml) (wm:cfg 'mw) (wm:cfg 'wire) (wm:cfg 'lace) (wm:cfg 'gap)
+ (setq result (jhr:maille-dialog-v120 (wm:cfg 'ml) (wm:cfg 'mw) (wm:cfg 'wire) (wm:cfg 'lace) (wm:cfg 'gap)
    (* 180.0 (/ (wm:cfg 'angle) pi)) (wm:cfg 'woven) (wm:cfg 'corner-auto)
    (wm:cfg 'sleeve-l) (wm:cfg 'sleeve-h) (wm:cfg 'stops) (if product (car product) "")))
  ;; The managed ResultBuffer wraps a Nil value as (nil), not nil.
