@@ -5,7 +5,7 @@ using AcApp=Autodesk.AutoCAD.ApplicationServices.Application;
 namespace JhrMailleUi;
 public static class Plugin
 {
-    [LispFunction("jhr:maille-dialog-v110")]
+    [LispFunction("jhr:maille-dialog-v120")]
     public static ResultBuffer Dialog(ResultBuffer args)
     {
         try
@@ -29,6 +29,6 @@ public static class Plugin
             return new ResultBuffer(new TypedValue((int)LispDataType.Nil));
         }
     }
-    [LispFunction("jhr:maille-ui-version-v110")]
-    public static string Version(ResultBuffer args)=>"1.1.0";
+    [LispFunction("jhr:maille-ui-version-v120")]
+    public static string Version(ResultBuffer args)=>"1.2.0";
 }
