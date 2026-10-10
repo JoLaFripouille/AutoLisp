@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+ <PropertyGroup><TargetFramework>net10.0-windows</TargetFramework><UseWindowsForms>true</UseWindowsForms><OutputType>Exe</OutputType><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+ <ItemGroup><Compile Include="../MeshSettings.cs" Link="MeshSettings.cs"/><Compile Include="../MeshPreview.cs" Link="MeshPreview.cs"/><Compile Include="../MeshForm.cs" Link="MeshForm.cs"/><Compile Include="../JakobCatalogue.cs" Link="JakobCatalogue.cs"/><EmbeddedResource Include="../JakobWebnet.json" LogicalName="JhrMaille.JakobWebnet.json"/></ItemGroup>
+</Project>

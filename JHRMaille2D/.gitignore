@@ -1,0 +1,4 @@
+Interface/**/bin/
+Interface/**/obj/
+Interface/**/dist/
+*.pdb
