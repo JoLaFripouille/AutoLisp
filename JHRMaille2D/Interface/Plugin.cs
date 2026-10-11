@@ -3,9 +3,9 @@ using Autodesk.AutoCAD.Runtime;
 using AcApp=Autodesk.AutoCAD.ApplicationServices.Application;
 
 namespace JhrMailleUi;
-public static class Plugin
+public static class LegacyDialog
 {
-    [LispFunction("jhr:maille-dialog-v133r1")]
+    [LispFunction("jhr:maille-dialog-v140")]
     public static ResultBuffer Dialog(ResultBuffer args)
     {
         try
@@ -32,6 +32,6 @@ public static class Plugin
             return new ResultBuffer(new TypedValue((int)LispDataType.Nil));
         }
     }
-    [LispFunction("jhr:maille-ui-version-v133r1")]
-    public static string Version(ResultBuffer args)=>"1.3.3";
+    [LispFunction("jhr:maille-ui-version-v140")]
+    public static string Version(ResultBuffer args)=>"1.4.2";
 }

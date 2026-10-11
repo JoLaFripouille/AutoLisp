@@ -2,6 +2,29 @@ namespace JhrMailleUi;
 public sealed class MeshForm : Form
 {
     public MeshSettings Settings {get;private set;}
+    public event Action<FillSettings>? DraftChanged;
+    public event Action<FillSettings>? ApplyRequested;
+    public FillSettings Draft=>ReadTools();
+    public void SelectTool(FillTool tool)=>navigation.SelectTool(ToolKey(tool));
+    readonly Label liveStatus=new(){Dock=DockStyle.Top,Height=56,Padding=new(12,5,12,4)};
+    readonly Button contours=new(){Text="Resélectionner les contours",Dock=DockStyle.Top,Height=30};
+    public event Action? ContoursRequested;
+    public void LiveMode(string status){
+        Text="JHR Panneaux — aperçu dans le dessin";liveStatus.Text=status;liveStatus.ForeColor=Color.FromArgb(35,78,95);
+        Controls.Add(contours);Controls.Add(liveStatus);contours.Click+=(_,_)=>ContoursRequested?.Invoke();
+        foreach(var b in pages.Values)b.Accept.Text="Appliquer";accept.Text="Appliquer";
+        Shown+=(_,_)=>{
+            // Compact inspector: the actual panel is previewed in the DWG alongside it.
+            void Compact(Control control){foreach(Control child in control.Controls)Compact(child);if(control is TableLayoutPanel table&&table.ColumnCount==2&&table.RowCount==3){table.ColumnStyles[0].SizeType=SizeType.Percent;table.ColumnStyles[0].Width=100;table.ColumnStyles[1].SizeType=SizeType.Absolute;table.ColumnStyles[1].Width=0;foreach(Control child in table.Controls)if(table.GetColumn(child)==1&&table.GetRow(child)==1)child.Visible=false;}}
+            Compact(this);var shell=Controls.OfType<TableLayoutPanel>().First();shell.ColumnStyles[0].Width=190;
+            MinimumSize=new(700,690);Size=new(740,Math.Min(820,Screen.FromControl(this).WorkingArea.Height-180));Location=new(Screen.FromControl(this).WorkingArea.Left+16,150);
+            foreach(var page in pages.Values)page.Live=true;UpdatePreview();
+        };
+        KeyPreview=true;KeyDown+=(_,e)=>{if(e.KeyCode==Keys.Escape){e.Handled=true;Close();}};
+    }
+    public void Status(string text,bool valid=true){liveStatus.Text=text;liveStatus.ForeColor=valid?Color.FromArgb(35,78,95):Color.Firebrick;accept.Enabled=valid;foreach(var page in pages.Values)page.Accept.Enabled=valid;}
+    public void Complete(){DialogResult=DialogResult.OK;Close();}
+    void NotifyDraft(){if(pages.Count==3&&numbers.Count==9)DraftChanged?.Invoke(ReadTools());}
     readonly MeshSettings initial;
     readonly FillSettings initialTools;
     public FillSettings ToolSettings {get;private set;}
@@ -97,7 +120,7 @@ public sealed class MeshForm : Form
         catalogUpdating=false;PopulateDiameters(s.ProductReference);
         foreach(var tool in new[]{FillTool.Square,FillTool.Expanded,FillTool.Perforated}){
             var page=new PatternPage(tool,tools.Pattern(tool),tools.SquareMask){Visible=false};
-            page.Accepted+=Finish;page.Cancelled+=()=>{DialogResult=DialogResult.Cancel;Close();};pages.Add(tool,page);pageHost.Controls.Add(page);
+            page.Accepted+=Finish;page.Cancelled+=()=>{DialogResult=DialogResult.Cancel;Close();};pages.Add(tool,page);pageHost.Controls.Add(page);page.Changed+=NotifyDraft;
         }
         navigation.ToolSelected+=key=>ShowTool(key switch{"grillage-carre"=>FillTool.Square,"metal-deploye"=>FillTool.Expanded,"tole-perforee"=>FillTool.Perforated,_=>FillTool.Mesh});
         if(tools.Tool!=FillTool.Mesh)navigation.SelectTool(ToolKey(tools.Tool));
@@ -106,9 +129,9 @@ public sealed class MeshForm : Form
     public static string ToolKey(FillTool tool)=>tool switch{FillTool.Square=>"grillage-carre",FillTool.Expanded=>"metal-deploye",FillTool.Perforated=>"tole-perforee",_=>"filet-inox-losange"};
     void ShowTool(FillTool tool){selectedTool=tool;meshPage.Visible=tool==FillTool.Mesh;foreach(var item in pages)item.Value.Visible=item.Key==tool;
         if(tool==FillTool.Mesh){meshPage.BringToFront();AcceptButton=accept;CancelButton=meshCancel;}
-        else{pages[tool].BringToFront();AcceptButton=pages[tool].Accept;CancelButton=pages[tool].Cancel;}}
+        else{pages[tool].BringToFront();AcceptButton=pages[tool].Accept;CancelButton=pages[tool].Cancel;}NotifyDraft();}
     FillSettings ReadTools(){var state=initialTools with{Tool=selectedTool,Mesh=Read()};foreach(var item in pages)state=state.WithPattern(item.Key,item.Value.Read());return state with{SquareMask=pages[FillTool.Square].Mask};}
-    void Finish(){var candidate=ReadTools();if(candidate.Validate()!=null)return;ToolSettings=candidate;Settings=candidate.Mesh;DialogResult=DialogResult.OK;Close();}
+    void Finish(){var candidate=ReadTools();if(candidate.Validate()!=null)return;ToolSettings=candidate;Settings=candidate.Mesh;if(ApplyRequested!=null)ApplyRequested(candidate);else{DialogResult=DialogResult.OK;Close();}}
     MeshSettings Read()=>new((double)numbers["width"].Value,(double)numbers["height"].Value,(double)numbers["wire"].Value,
         (double)numbers["lace"].Value,(double)numbers["gap"].Value,(double)numbers["angle"].Value,mode.SelectedIndex==1,corners.Checked,
         (double)numbers["sleeveL"].Value,(double)numbers["sleeveH"].Value,(int)numbers["stops"].Value,SelectedProduct?.Reference??"");
@@ -165,11 +188,11 @@ public sealed class MeshForm : Form
         setting=true;
         try
         {
-            var s=Read();var message=s.Validate();accept.Enabled=message==null;error.ForeColor=message==null?Color.DimGray:Color.Firebrick;error.Text=message??"Valider, puis sélectionner le contour intérieur\net le contour extérieur du cadre.";
+            var s=Read();var message=s.Validate();accept.Enabled=message==null;error.ForeColor=message==null?Color.DimGray:Color.Firebrick;error.Text=message??(ApplyRequested!=null?"Aperçu dans le dessin. Appliquer pour valider.":"Valider, puis sélectionner le contour intérieur\net le contour extérieur du cadre.");
             numbers["sleeveL"].Enabled=numbers["sleeveH"].Enabled=!s.Woven&&SelectedProduct==null;
             if(message==null){preview.Settings=s;preview.Dimensions=dimensions.Checked;preview.Invalidate();}
             caption.Text=$"X {s.Width:g} × Y {s.Height:g} mm  ·  câble Ø{s.Wire:g} mm  ·  {s.Angle:g}°";
         }
-        finally{setting=false;}
+        finally{setting=false;}NotifyDraft();
     }
 }

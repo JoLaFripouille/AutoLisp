@@ -998,3 +998,9 @@
 
 (princ "\nJHRMAILLE : choisir l outil et le mode de contours, puis creer un panneau. JHRMAILLEPARAM : interface seule. JHRMAILLECLI : sans interface.")
 (princ)
+
+; JHR .NET 1.4 : bridge, old CLI remains available when the plugin is absent.
+(defun c:JHRMAILLE (/ result)
+ (setq result (vl-catch-all-apply 'jhr:maille-net-create-v140 nil))
+ (if (vl-catch-all-error-p result) (c:JHRMAILLECLI))
+ (princ))

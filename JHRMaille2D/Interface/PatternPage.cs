@@ -4,6 +4,8 @@ public sealed class PatternPage : UserControl
     public readonly Button Accept=new(){Text="Valider les paramètres",AutoSize=true};
     public readonly Button Cancel=new(){Text="Annuler",AutoSize=true};
     public event Action? Accepted;
+    public event Action? Changed;
+    bool live;[System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)] public bool Live {get=>live;set{live=value;UpdatePreview();}}
     public event Action? Cancelled;
     readonly FillTool tool;
     readonly CheckBox mask=new(){Text="Masquage arrière-plan",AutoSize=true};
@@ -44,7 +46,7 @@ public sealed class PatternPage : UserControl
             maskScope.Items.AddRange(["Sous les fils · ouvertures transparentes","Toute la surface intérieure"]);
             maskScope.SelectedIndex=squareMask==2?1:0;mask.Checked=squareMask!=0;maskScope.Enabled=mask.Checked;
             fields.Controls.Add(maskScope,0,row++);fields.SetColumnSpan(maskScope,2);
-            mask.CheckedChanged+=(_,_)=>maskScope.Enabled=mask.Checked;
+            mask.CheckedChanged+=(_,_)=>{maskScope.Enabled=mask.Checked;UpdatePreview();};maskScope.SelectedIndexChanged+=(_,_)=>UpdatePreview();
         }
         string hint=tool switch{
             FillTool.Square=>"Ouverture libre + diamètre = entraxe des fils.\nUn contour : les fils s’arrêtent sur cette limite.\nDeux contours : arrêt sur le contour extérieur.\nFils horizontaux devant ; verticaux interrompus aux croisements.\nExtrémités fermées ; trame centrée sans couper un fil dans sa longueur.\nMasquage limité au grillage, hors cadre.",
@@ -61,5 +63,5 @@ public sealed class PatternPage : UserControl
     }
     double Value(string key,double fallback)=>numbers.TryGetValue(key,out var n)?(double)n.Value:fallback;
     public PatternSettings Read()=>new(Value("a",30),Value("b",Value("a",30)),Value("wire",1),Value("thickness",1),Value("gap",0),Value("angle",0),Value("margin",0),Math.Max(0,pattern.SelectedIndex));
-    void UpdatePreview(){if(!numbers.ContainsKey("angle")||pattern.SelectedIndex<0)return;var s=Read();string? msg=s.Validate(tool);Accept.Enabled=msg==null;error.ForeColor=msg==null?Color.DimGray:Color.Firebrick;error.Text=msg??(tool==FillTool.Square&&s.Pattern==0?"Valider, puis sélectionner UN contour fermé\nde la taille totale du panneau.":"Valider, puis sélectionner le contour intérieur\net le contour extérieur du cadre.");if(msg==null){preview.Tool=tool;preview.Settings=s;preview.Dimensions=dimensions.Checked;preview.Invalidate();}caption.Text=PatternRenderer.Designation(tool,s);}
+    void UpdatePreview(){if(!numbers.ContainsKey("angle")||pattern.SelectedIndex<0)return;var s=Read();string? msg=s.Validate(tool);Accept.Enabled=msg==null;error.ForeColor=msg==null?Color.DimGray:Color.Firebrick;error.Text=msg??(Live?"Aperçu dans le dessin. Appliquer pour valider.":tool==FillTool.Square&&s.Pattern==0?"Valider, puis sélectionner UN contour fermé\nde la taille totale du panneau.":"Valider, puis sélectionner le contour intérieur\net le contour extérieur du cadre.");if(msg==null){preview.Tool=tool;preview.Settings=s;preview.Dimensions=dimensions.Checked;preview.Invalidate();}caption.Text=PatternRenderer.Designation(tool,s);Changed?.Invoke();}
 }

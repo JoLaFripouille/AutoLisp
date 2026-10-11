@@ -1,4 +1,7 @@
-Interface/**/bin/
-Interface/**/obj/
-Interface/**/dist/
-*.pdb
+Interface/obj/
+Interface/dist/
+Interface/Tests/bin/
+Interface/Tests/obj/
+Interface/MathTests/bin/
+Interface/MathTests/obj/
+**/__pycache__/

@@ -1,0 +1,7 @@
+obj/
+dist/
+Tests/bin/
+Tests/obj/
+__pycache__/
+MathTests/bin/
+MathTests/obj/

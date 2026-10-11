@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ApplicationPackage SchemaVersion="1.0" AutodeskProduct="AutoCAD" Name="JHR Panneaux" AppVersion="1.4.2" Description="Panneaux de remplissage 2D et API JSON" Author="JHR" ProductCode="{8F0DB08C-0813-4B17-9C09-80A9A46FE604}" UpgradeCode="{BEE822AD-BB0F-41C3-9C40-4B57AC373D14}">
+  <CompanyDetails Name="JHR" />
+  <RuntimeRequirements OS="Win64" Platform="AutoCAD*" SeriesMin="R26.0" SeriesMax="R26.0" />
+  <Components>
+    <RuntimeRequirements OS="Win64" Platform="AutoCAD*" SeriesMin="R26.0" SeriesMax="R26.0" />
+    <ComponentEntry AppName="JHR Panneaux" Version="1.4.2" ModuleName="./Contents/Windows/JhrMaillePlugin_v1_4_2_final.dll" AppDescription="Éditeur de panneaux et API JSON" LoadOnAutoCADStartup="True" LoadOnCommandInvocation="True">
+      <Commands GroupName="JHRPANNEAUX">
+        <Command Global="JHRMAILLE" Local="JHRMAILLE" />
+        <Command Global="JHRPANNEAU" Local="JHRPANNEAU" />
+        <Command Global="JHRPANNEAUEDIT" Local="JHRPANNEAUEDIT" />
+        <Command Global="JHRPANNEAUAPI" Local="JHRPANNEAUAPI" />
+      </Commands>
+    </ComponentEntry>
+  </Components>
+</ApplicationPackage>
