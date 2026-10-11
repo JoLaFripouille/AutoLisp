@@ -2,10 +2,11 @@
 import json,time,tempfile
 from pathlib import Path
 
-def send(request, *, drawing, timeout=60):
+def send(request, *, drawing, timeout=60, tool="panel"):
     import pythoncom
     from win32com.client.dynamic import Dispatch
     if not drawing:raise ValueError("Chemin du dessin requis")
+    if tool not in ("panel","frame"):raise ValueError("Outil inconnu : panel ou frame")
     pythoncom.CoInitialize()
     try:
         app=Dispatch(pythoncom.GetActiveObject("AutoCAD.Application").QueryInterface(pythoncom.IID_IDispatch))
@@ -19,7 +20,8 @@ def send(request, *, drawing, timeout=60):
             path=Path(work)/"request.json";out=Path(str(path)+".response.json")
             path.write_text(json.dumps(req,ensure_ascii=False),encoding="utf-8")
             if path.stat().st_size>2_000_000:raise ValueError("Requête trop volumineuse")
-            doc.SendCommand('_JHRPANNEAUAPI\n"'+path.as_posix()+'"\n')
+            command="JHRCADREAPI" if tool=="frame" else "JHRPANNEAUAPI"
+            doc.SendCommand('_'+command+'\n"'+path.as_posix()+'"\n')
             end=time.monotonic()+timeout
             while time.monotonic()<end:
                 if out.exists():
@@ -31,6 +33,6 @@ def send(request, *, drawing, timeout=60):
 
 if __name__=="__main__":
     import argparse
-    cli=argparse.ArgumentParser();cli.add_argument("request",type=Path);cli.add_argument("--drawing",required=True)
+    cli=argparse.ArgumentParser();cli.add_argument("request",type=Path);cli.add_argument("--drawing",required=True);cli.add_argument("--tool",choices=("panel","frame"),default="panel")
     args=cli.parse_args()
-    print(json.dumps(send(json.loads(args.request.read_text(encoding="utf-8-sig")),drawing=args.drawing),ensure_ascii=False))
+    print(json.dumps(send(json.loads(args.request.read_text(encoding="utf-8-sig")),drawing=args.drawing,tool=args.tool),ensure_ascii=False))

@@ -1,0 +1,4 @@
+<Project Sdk="Microsoft.NET.Sdk">
+ <PropertyGroup><TargetFramework>net10.0-windows</TargetFramework><UseWindowsForms>true</UseWindowsForms><OutputType>Exe</OutputType><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+ <ItemGroup><Compile Include="../../Frames/FrameModel.cs" Link="FrameModel.cs"/><Compile Include="../../Frames/FrameDialog.cs" Link="FrameDialog.cs"/><Compile Include="../../UiTheme.cs" Link="UiTheme.cs"/></ItemGroup>
+</Project>

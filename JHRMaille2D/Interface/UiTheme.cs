@@ -37,7 +37,8 @@ internal sealed class NavButton : Button
     protected override void OnMouseEnter(EventArgs e){hover=true;Invalidate();base.OnMouseEnter(e);}
     protected override void OnMouseLeave(EventArgs e){hover=false;Invalidate();base.OnMouseLeave(e);}
     protected override void OnPaint(PaintEventArgs e){var g=e.Graphics;g.Clear(UiTheme.Nav);g.SmoothingMode=SmoothingMode.AntiAlias;using var path=UiTheme.Rounded(new(0,0,Width-1,Height-1));using var bg=new SolidBrush(Selected?UiTheme.Soft:hover?Color.FromArgb(39,55,69):UiTheme.Nav);g.FillPath(bg,path);var color=Selected?UiTheme.Accent:Color.FromArgb(191,205,217);using var pen=new Pen(color,1.4f);float x=15,y=Height/2f-10;
-        if(Key=="tole-perforee"){for(int i=0;i<3;i++)for(int j=0;j<3;j++)g.DrawEllipse(pen,x+i*7,y+j*7,3.6f,3.6f);}
+        if(Key.StartsWith("cadre-")){g.DrawRectangle(pen,x,y,20,20);if(Key=="cadre-Rolled"){g.DrawLine(pen,x+4,y+5,x+16,y+5);g.DrawLine(pen,x+10,y+5,x+10,y+15);g.DrawLine(pen,x+4,y+15,x+16,y+15);}else{g.DrawRectangle(pen,x+4,y+4,12,12);if(Key=="cadre-SheetDoor")g.DrawLine(pen,x+4,y+16,x+16,y+4);}}
+        else if(Key=="tole-perforee"){for(int i=0;i<3;i++)for(int j=0;j<3;j++)g.DrawEllipse(pen,x+i*7,y+j*7,3.6f,3.6f);}
         else if(Key=="grillage-carre"){for(int i=0;i<4;i++){g.DrawLine(pen,x+i*6,y,x+i*6,y+18);g.DrawLine(pen,x,y+i*6,x+18,y+i*6);}}
         else{for(int i=0;i<2;i++){float xx=x+i*11;g.DrawLines(pen,new PointF[]{new(xx,y+10),new(xx+6,y),new(xx+12,y+10),new(xx+6,y+20),new(xx,y+10)});}if(Key=="metal-deploye"){g.DrawLine(pen,x,y+10,x+4,y+10);g.DrawLine(pen,x+18,y+10,x+23,y+10);}}
         TextRenderer.DrawText(g,Text,Font,new Rectangle(47,3,Width-54,Height-6),Selected?UiTheme.Ink:Color.FromArgb(227,235,241),TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.WordBreak);if(Focused&&ShowFocusCues){using var focus=new Pen(color){DashStyle=DashStyle.Dot};g.DrawRectangle(focus,4,4,Width-9,Height-9);}}

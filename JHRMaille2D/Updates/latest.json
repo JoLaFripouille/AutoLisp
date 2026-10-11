@@ -1,9 +1,9 @@
 {
   "schema": 1,
-  "version": "1.4.4",
-  "package": "JHR.Panneaux-1.4.4.zip",
-  "sha256": "970f1626c81224d894410bec677617956f3b0a3fd3d92b2c2b4ac53e2a323d49",
-  "size": 141418,
+  "version": "1.5.1",
+  "package": "JHR.Panneaux-1.5.1.zip",
+  "sha256": "73d1085af10db64c00759242bab46e54a379629900ad646b5ec6031181b2ed23",
+  "size": 177924,
   "autoCadSeries": "R26.0",
-  "notes": "Bandeau corrigé aux différentes échelles Windows ; vérification et installation des mises à jour GitHub."
+  "notes": "JHRCADRE : cadres rectangulaires en tubes, sections Jansen, laminés et portes tôlées ; lignes de coupe déplaçables, sections réelles et API JSON."
 }

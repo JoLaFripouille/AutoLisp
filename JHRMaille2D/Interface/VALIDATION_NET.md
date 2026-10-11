@@ -50,3 +50,29 @@ fichier inattendu/dupliqué, chemin extérieur, DLL invalide, version incompatib
 annulation, hors connexion, sauvegarde, DLL chargée conservée, version déjà installée.
 Un manifeste verrouillé provoque un rollback sans changer l’ancienne installation.
 Le redémarrage automatique est laissé à l’utilisateur ; aucun plan n’est fermé.
+
+## Cadres 1.5.1 — 11 octobre 2026
+
+Compilation Release : 0 erreur, 0 avertissement. Tests isolés dans AutoCAD/Advance
+Steel 2027, DWG distinct des plans client, session chargée par NETLOAD.
+294 sections valides de gabarit et 625 fichiers Jansen indexés localement ; cinq
+sections Jansen effectivement importées. Tous les fichiers indexés ne sont pas
+des sections certifiées utilisables : import et validation à la demande.
+
+Vraie section tube 40×40 ép.3 : deux parois longitudinales de 3 mm, vide conservé.
+Rotations 0/90/180/270 et miroirs testés sur tube, IPE100 et section Jansen30011.
+Création native des quatre outils avec deux coupes, modification du même handle,
+placements conservés, édition indépendante d’une copie, refus de dessin erroné
+et révision périmée, annulation AutoCAD unique du cadre et de ses coupes, propriétés calque0/DuCalque contrôlées. Comptages et état
+d’enregistrement des autres dessins ouverts inchangés.
+
+Interface : modification propagée, création/déplacement d’une ligne de coupe,
+annulation sur les quatre familles, commande native d’édition et double-clic
+sur le cadre Jansen. Aucun dialogue BEDIT concomitant observé.
+Suite des panneaux existants, 202 références et tests de mise à jour passée.
+Tests de mise à jour 1.5.1 : installation à partir d’une fixture 1.4.4 simulée.
+
+Limites : rectangles, sections d’angles à45° refusées, ouvrants/quincaillerie
+Jansen non assemblés. Voir CADRES.md. Autoload après redémarrage non vérifié.
+
+Contrôle complémentaire 1.5.1 : ossature 80×80 avec dormant 40×40, divisions à 60 mm refusées et à 100 mm acceptées, testé dans AutoCAD. Double-clic d’un panneau carré existant et ouverture JHRCADRE avec tube 40×40 ép.3 vérifiés sans dialogue BEDIT.

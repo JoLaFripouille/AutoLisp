@@ -1,8 +1,15 @@
-# JHR Panneaux 1.4.4 — JHRMAILLE en plugin .NET
+# JHR Panneaux et Cadres 1.5.1 — JHRMAILLE en plugin .NET
 
 Créer et modifier des panneaux 2D : **filet inox losange**, **grillage serrurier carré**,
 **métal déployé** et **tôle perforée**. Le calcul, les transactions et la fenêtre fonctionnent
 entièrement en .NET, sans charger de moteur de dessin LISP.
+
+## Cadres — nouveau dans 1.5.1
+
+**JHRCADRE** : cadres rectangulaires en tubes, sections Jansen, laminés et portes tôlées.
+Définir les lignes de coupe directement dans l’aperçu. **JHRCADREEDIT** ou double-clic
+pour modifier le cadre et ses coupes. Réutilisation de bibliothèques locales, API JSON.
+[Mode d’emploi et limites](CADRES.md) · [API agent](CADRES_AGENT_API.md).
 
 ## Installer
 
@@ -10,7 +17,7 @@ Paquet autonome pour **AutoCAD / Advance Steel 2027 Windows x64, .NET 10**.
 Copier `JHR.Panneaux.bundle` dans `%APPDATA%/Autodesk/ApplicationPlugins`, ou lancer
 `InstallPlugin.ps1` depuis ce dossier. Il sauvegarde un éventuel paquet existant.
 Redémarrer AutoCAD après avoir enregistré ses plans pour contrôler l’autoload.
-Pour la session courante : **NETLOAD** → `JhrMaillePlugin_v1_4_4_final.dll`.
+Pour la session courante : **NETLOAD** → `JhrMaillePlugin_v1_5_1_final.dll`.
 Le plugin ne change pas les réglages de sécurité. Un avertissement de sécurité doit être
 traité par l’utilisateur selon les règles de son installation.
 

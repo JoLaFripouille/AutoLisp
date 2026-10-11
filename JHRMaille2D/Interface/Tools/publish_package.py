@@ -13,6 +13,6 @@ for marker in ('C:/Users/','C:\\Users\\','OneDrive'):
 output.mkdir(parents=True,exist_ok=True);package=output/f'JHR.Panneaux-{version}.zip'
 with zipfile.ZipFile(package,'w',zipfile.ZIP_DEFLATED) as archive:
  for path in (manifest,dll):archive.write(path,'JHR.Panneaux.bundle/'+path.relative_to(bundle).as_posix())
-feed={'schema':1,'version':version,'package':package.name,'sha256':hashlib.sha256(package.read_bytes()).hexdigest(),'size':package.stat().st_size,'autoCadSeries':'R26.0','notes':'Bandeau corrigé aux différentes échelles Windows ; vérification et installation des mises à jour GitHub.'}
+feed={'schema':1,'version':version,'package':package.name,'sha256':hashlib.sha256(package.read_bytes()).hexdigest(),'size':package.stat().st_size,'autoCadSeries':'R26.0','notes':'JHRCADRE : cadres rectangulaires en tubes, sections Jansen, laminés et portes tôlées ; lignes de coupe déplaçables, sections réelles et API JSON.'}
 (output/'latest.json').write_text(json.dumps(feed,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
 print('Update package:',package.name,'Version:',version,'SHA256:',feed['sha256'])
