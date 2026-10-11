@@ -4,7 +4,7 @@ public sealed record Vertex(double X,double Y,double Bulge=0);
 public sealed record PanelData
 {
     public int Schema {get;init;}=1;
-    public string Engine {get;init;}="1.4.3";
+    public string Engine {get;init;}="1.4.4";
     public FillSettings Settings {get;init;}=new();
     public Vertex[] Inner {get;init;}=[];
     public Vertex[]? Outer {get;init;}

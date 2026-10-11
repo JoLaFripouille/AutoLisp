@@ -1,3 +1,5 @@
+> Documentation historique de la version LISP. Les anciennes DLL d’interface ne sont plus distribuées. Pour une installation actuelle, utiliser le [plugin .NET](README.md). Le LISP conserve son mode JHRMAILLECLI sans interface.
+
 # JHRMAILLE 1.3.3 — panneaux de remplissage en 2D
 
 Commande AutoLISP avec une interface commune pour créer des panneaux : **filet inox losange**, **grillage serrurier à maille carrée**, **métal déployé** et **tôle perforée**. Chaque outil possède ses réglages et son aperçu. Le filet conserve les références Jakob Webnet et son laçage adapté au cadre.

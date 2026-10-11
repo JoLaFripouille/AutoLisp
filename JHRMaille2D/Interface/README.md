@@ -1,4 +1,4 @@
-# JHR Panneaux 1.4.3 — JHRMAILLE en plugin .NET
+# JHR Panneaux 1.4.4 — JHRMAILLE en plugin .NET
 
 Créer et modifier des panneaux 2D : **filet inox losange**, **grillage serrurier carré**,
 **métal déployé** et **tôle perforée**. Le calcul, les transactions et la fenêtre fonctionnent
@@ -10,7 +10,7 @@ Paquet autonome pour **AutoCAD / Advance Steel 2027 Windows x64, .NET 10**.
 Copier `JHR.Panneaux.bundle` dans `%APPDATA%/Autodesk/ApplicationPlugins`, ou lancer
 `InstallPlugin.ps1` depuis ce dossier. Il sauvegarde un éventuel paquet existant.
 Redémarrer AutoCAD après avoir enregistré ses plans pour contrôler l’autoload.
-Pour la session courante : **NETLOAD** → `JhrMaillePlugin_v1_4_3_final.dll`.
+Pour la session courante : **NETLOAD** → `JhrMaillePlugin_v1_4_4_final.dll`.
 Le plugin ne change pas les réglages de sécurité. Un avertissement de sécurité doit être
 traité par l’utilisateur selon les règles de son installation.
 
@@ -81,10 +81,29 @@ Les essais sont décrits dans [VALIDATION_NET.md](VALIDATION_NET.md).
 L’autoload après redémarrage reste à vérifier sur cette installation ; les fonctions ont
 été testées dans une session AutoCAD 2027 chargée par NETLOAD, dans un DWG séparé.
 
-## Interface 1.4.3
+## Interface 1.4.4
 
 Navigation sombre avec pictogrammes, sections de réglages, champs plus lisibles,
 boutons arrondis et commandes fixes en bas. En saisie libre, les champs fabricant
 sans objet sont masqués ; choisir une gamme Jakob les affiche automatiquement.
 L’inspecteur reste redimensionnable et les réglages supplémentaires défilent.
 Les aperçus, annulations et paramètres de panneau conservent leur fonctionnement.
+
+## Mises à jour GitHub — à partir de 1.4.4
+
+Dans le bandeau de JHRMAILLE, cliquer **Mises à jour**, ou lancer **JHRPANNEAUUPDATE**.
+La fenêtre vérifie la version publiée. Si une version compatible plus récente existe,
+cliquer **Installer**. Enregistrer les plans et redémarrer AutoCAD pour l’utiliser.
+La version chargée reste active jusqu’à la fermeture ; le plugin ne ferme aucun plan.
+
+La vérification est déclenchée uniquement à l’ouverture de cette fenêtre ou par **Vérifier**.
+Elle contacte le dépôt public JoLaFripouille/AutoLisp, sans envoyer de dessin, de paramètres
+ou de données de chantier. Hors connexion, le plugin reste utilisable.
+Le paquet est contrôlé (taille, SHA-256, version de DLL, compatibilité AutoCAD 2027).
+Une sauvegarde du bundle précédent est créée sous `%APPDATA%/Autodesk/JHR-Panneaux-Backups`.
+La DLL chargée n’est jamais écrasée ; le descriptif de démarrage est remplacé en dernier.
+Les versions antérieures à 1.4.4 nécessitent une installation manuelle unique de ce bundle.
+
+Pour publier une version : incrémenter version/nom de DLL, compiler, actualiser le bundle,
+puis lancer `python Tools/publish_package.py CHEMIN_BUNDLE CHEMIN_UPDATES`.
+Publier ensemble le ZIP et `Updates/latest.json` ; ne pas remplacer un paquet déjà publié.

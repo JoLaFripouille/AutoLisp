@@ -110,6 +110,8 @@ static class Program
  [STAThread] static void Main(string[] args)
  {
   ApplicationConfiguration.Initialize();string output=args[0];Directory.CreateDirectory(output);
+  if(args.Contains("--navigation")){NavigationTests.Run(output);return;}
+  UpdateTests.Run(output).GetAwaiter().GetResult();
   var s=new MeshSettings();Check(s.Validate()==null,"Valeurs existantes acceptées");
   using(var f=new MeshForm(s)){
    var nav=Field<ToolNavigation>(f,"navigation");
