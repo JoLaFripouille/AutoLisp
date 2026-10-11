@@ -16,6 +16,7 @@ public sealed record PatternSettings(double A,double B,double Wire,double Thickn
 public sealed record FillSettings
 {
     public FillTool Tool {get;init;}
+    public int SquareMask {get;init;}
     public MeshSettings Mesh {get;init;}=new();
     public PatternSettings Square {get;init;}=new(30,30,3,1);
     public PatternSettings Expanded {get;init;}=new(40,20,2,1.5);
@@ -23,5 +24,5 @@ public sealed record FillSettings
     public PatternSettings Pattern(FillTool tool)=>tool switch {FillTool.Square=>Square,FillTool.Expanded=>Expanded,FillTool.Perforated=>Perforated,_=>throw new ArgumentException("Outil de motif attendu.")};
     public FillSettings WithPattern(FillTool tool,PatternSettings value)=>tool switch {FillTool.Square=>this with{Square=value},FillTool.Expanded=>this with{Expanded=value},FillTool.Perforated=>this with{Perforated=value},_=>throw new ArgumentException()};
     public double[] ExtraValues()=>new[]{(double)Tool}.Concat(Square.Values()).Concat(Expanded.Values()).Concat(Perforated.Values()).ToArray();
-    public string? Validate()=>Tool==FillTool.Mesh?Mesh.Validate():Pattern(Tool).Validate(Tool);
+    public string? Validate()=>SquareMask is <0 or >2?"Masquage inconnu.":Tool==FillTool.Mesh?Mesh.Validate():Pattern(Tool).Validate(Tool);
 }

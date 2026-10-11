@@ -1,19 +1,19 @@
-# JHRMAILLE 1.3.2 — panneaux de remplissage en 2D
+# JHRMAILLE 1.3.3 — panneaux de remplissage en 2D
 
 Commande AutoLISP avec une interface commune pour créer des panneaux : **filet inox losange**, **grillage serrurier à maille carrée**, **métal déployé** et **tôle perforée**. Chaque outil possède ses réglages et son aperçu. Le filet conserve les références Jakob Webnet et son laçage adapté au cadre.
 
-![Interface JHRMAILLE](Apercu_interface.png)
+![Interface](Apercu_interface.png)
 
-![Les quatre panneaux](Apercu_panneaux.png)
+![Extrémités fermées](Apercu_grillage_extremites.png)
 
-![Détail du déployé corrigé](Apercu_deploye.png)
+![Contrôle du masquage](Apercu_grillage_masquage.png)
 
 ## Installation
 
-Télécharger le dossier complet **JHRMaille2D** du dépôt, ou l’archive du dépôt : le LISP seul ne contient pas l’interface. Les deux fichiers nécessaires sont `JHR_Maille_2D.lsp` et `JhrMailleUi_v1_3_2.dll`.
+Télécharger le dossier complet **JHRMaille2D** du dépôt, ou l’archive du dépôt : le LISP seul ne contient pas l’interface. Les deux fichiers nécessaires sont `JHR_Maille_2D.lsp` et `JhrMailleUi_v1_3_3r1.dll`.
 
 1. Dans AutoCAD pour Windows, charger `JHR_Maille_2D.lsp` avec **APPLOAD**.
-2. Charger `JhrMailleUi_v1_3_2.dll` avec **NETLOAD**. Cette étape n’est pas nécessaire si le dossier est déjà dans les chemins de recherche et que le LISP trouve la DLL automatiquement.
+2. Charger `JhrMailleUi_v1_3_3r1.dll` avec **NETLOAD**. Cette étape n’est pas nécessaire si le dossier est déjà dans les chemins de recherche et que le LISP trouve la DLL automatiquement.
 3. Respecter les règles de sécurité de l’installation. L’outil ne modifie pas SECURELOAD ou TRUSTEDPATHS.
 4. Lancer **JHRMAILLEPARAM** pour vérifier que la fenêtre s’ouvre, puis **JHRMAILLE** pour créer un panneau.
 
@@ -53,6 +53,8 @@ Pour le grillage, le déployé et la tôle perforée, ces dimensions sont l’en
 
 Le grillage est **soudé à fils droits**. La dimension saisie est l’ouverture libre entre les bords des fils ; **entraxe = ouverture libre + diamètre**. Exemple : ouverture 30 mm et fil Ø3 mm → entraxe 33 mm. Les fils sont dessinés par **deux bords géométriques sans largeur de polyligne**. Les fils horizontaux passent devant ; les deux bords des verticaux s’interrompent à chaque croisement.
 
+La trame est centrée en conservant le pas et le diamètre. Sur un rectangle orienté selon la trame, les rives finissent dans une ouverture : aucun rond coupé dans sa longueur. Les bouts des fils sont fermés par un trait de coupe suivant l’angle réel du contour, y compris en trapèze et sur un contour concave. Un panneau plus petit que le diamètre du fil est refusé.
+
 Choisir dans **Sélection du grillage soudé** :
 
 - **Un contour · limite du panneau** : sélectionner une seule polyligne fermée. Les fils sont découpés sur cette limite.
@@ -62,6 +64,21 @@ Choisir dans **Sélection du grillage soudé** :
 Pour finir exactement sur la limite choisie, régler **Retrait au cadre = 0**. Un retrait positif réduit le panneau à l’intérieur de cette limite. Les polylignes trapézoïdales et les contours concaves sont aussi découpés ; un retrait qui divise le panneau est refusé.
 
 Les traits cachés utilisent le type de ligne local **JHR_CACHE**, motif 4 mm / espace 2 mm. Seul leur type de ligne est fixé ; couleur et épaisseur restent DuCalque. L’affichage imprimé dépend aussi des réglages de type de ligne de la présentation et de la fenêtre. L’outil ne change pas LTSCALE, PSLTSCALE ou les présentations.
+
+### Masquage arrière-plan du grillage
+
+Dans la page **Grillage serrurier — maille carrée**, cocher **Masquage arrière-plan**, puis choisir :
+
+- **Sous les fils · ouvertures transparentes** : des WIPEOUT suivent uniquement la matière des ronds. Les objets derrière sont cachés sous les fils et restent visibles dans les ouvertures.
+- **Toute la surface intérieure** : un WIPEOUT masque toute l’ouverture intérieure du cadre, sous le dessin du grillage.
+
+Décocher crée le panneau sans masquage. Le choix est conservé pendant la session et en changeant de page ; Annuler, Échap et la croix conservent les réglages précédents. L’option concerne uniquement le grillage serrurier.
+
+Avec deux contours, les masques restent dans l’ouverture intérieure ; la bande derrière le cadre n’efface pas le cadre. Avec un contour, ils suivent le panneau après retrait. Les masques sont les premiers objets du bloc, sur calque 0 / DuCalque, derrière la grille. Placer la référence du panneau devant les objets à masquer ; si besoin : **ORDRETRACE → Avant**.
+
+Si les contours des WIPEOUT sont visibles, **WIPEOUTFRAME = 0** les cache ; **2** les affiche pour l’édition sans les imprimer. La commande laisse ce réglage du dessin inchangé. Maximum : 3 000 masques sous les fils ; diviser le panneau ou augmenter le pas au-delà. Les contours concaves sont décomposés en surfaces convexes pour conserver les ouvertures transparentes.
+
+Sans interface : **JHRMAILLEPARAMCLI → Carre → Masquage [Aucun/Fils/Surface]**. La sélection d’un/deux contours, les traits cachés et l’annulation en une étape restent disponibles.
 
 ## Métal déployé
 
@@ -134,4 +151,7 @@ Validation complémentaire du 11 octobre 2026 : compilation sans avertissement ;
 Limite pour les nouveaux outils : **15 000 positions de trame examinées**. Diviser un grand panneau ou augmenter le pas si cette limite est atteinte. Le grillage à deux bords et la tôle perforée détaillée créent davantage d’entités qu’une représentation schématique.
 
 
-Correction 1.3.2 du 11 octobre 2026 : métal déployé redessiné avec plats de jonction, contours continus et raccords adoucis, à partir de l’image fournie. L’aperçu .NET et le contour AutoLISP ont 30 points identiques à 10⁻¹⁰ mm près pour le cas ML40 / MW20 / lanière2. Six panneaux natifs vérifiés : automatique, plat7, trapèze, concave, rotation17°, relief60×30. Tous les sommets des contours restent dans le panneau source ; 6 534 polylignes auditées sans largeur et sur calque0 / DuCalque. Commande complète, désignation avec plat, annulation en une étape et refus des plats incompatibles / motifs trop denses validés. Les trois autres outils et les références Jakob sont conservés.
+Correction 1.3.2 du 11 octobre 2026 : métal déployé redessiné avec plats de jonction, contours continus et raccords adoucis, à partir de l’image fournie. L’aperçu .NET et le contour AutoLISP ont 30 points identiques à 10⁻¹⁰ mm près pour le cas ML40 / MW20 / lanière2. Six panneaux natifs vérifiés : automatique, plat7, trapèze, concave, rotation 17°, relief60×30. Tous les sommets des contours restent dans le panneau source ; 6 534 polylignes auditées sans largeur et sur calque 0 / DuCalque. Commande complète, désignation avec plat, annulation en une étape et refus des plats incompatibles / motifs trop denses validés. Les trois autres outils et les références Jakob sont conservés.
+
+
+Correction 1.3.3 du 11 octobre 2026 : trame centrée du grillage, fils entiers aux rives, extrémités fermées et masquage optionnel. Huit cas natifs sans masque puis huit avec les options vérifiés : 600×600, 750,7×762, deux contours visibles/cachés, trapèze, concave, rotation 17° et petit panneau Ø8. Contrôle des coupes, du contour, des croisements et des propriétés DuCalque ; ordre des WIPEOUT contrôlé dans les blocs réels. Export AutoCAD avec lignes rouges derrière : masquage sous les fils et ouvertures transparentes. Interface native finale 1.3.3, annulation des réglages, dimensions après retrait et Undo unique validés. Compilation sans avertissement et tests des quatre pages / 202 références Jakob conservés. Plan client préservé.

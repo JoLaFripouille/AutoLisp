@@ -6,13 +6,16 @@ public sealed class PatternPage : UserControl
     public event Action? Accepted;
     public event Action? Cancelled;
     readonly FillTool tool;
+    readonly CheckBox mask=new(){Text="Masquage arrière-plan",AutoSize=true};
+    readonly ComboBox maskScope=new(){Dock=DockStyle.Fill,DropDownStyle=ComboBoxStyle.DropDownList};
+    public int Mask=>mask.Checked?maskScope.SelectedIndex+1:0;
     readonly Dictionary<string,NumericUpDown> numbers=new();
     readonly ComboBox pattern=new(){Dock=DockStyle.Fill,DropDownStyle=ComboBoxStyle.DropDownList};
     readonly PatternPreview preview=new(){Dock=DockStyle.Fill};
     readonly Label error=new(){AutoSize=true,Dock=DockStyle.Fill};
     readonly Label caption=new(){AutoSize=true,Dock=DockStyle.Fill};
     readonly CheckBox dimensions=new(){Text="Afficher les dimensions",AutoSize=true};
-    public PatternPage(FillTool tool,PatternSettings s)
+    public PatternPage(FillTool tool,PatternSettings s,int squareMask=0)
     {
         this.tool=tool;Dock=DockStyle.Fill;
         var layout=new TableLayoutPanel{Dock=DockStyle.Fill,Padding=new(20),ColumnCount=2,RowCount=3};
@@ -36,8 +39,15 @@ public sealed class PatternPage : UserControl
         if(tool==FillTool.Expanded)Number("margin","Plat de jonction (0 = auto)",s.Margin,0);
         if(tool==FillTool.Perforated)Number("margin","Bordure pleine minimum (mm)",s.Margin,0);
         Number("angle","Orientation (degrés)",s.Angle,-360,360);
+        if(tool==FillTool.Square){
+            fields.Controls.Add(mask,0,row++);fields.SetColumnSpan(mask,2);
+            maskScope.Items.AddRange(["Sous les fils · ouvertures transparentes","Toute la surface intérieure"]);
+            maskScope.SelectedIndex=squareMask==2?1:0;mask.Checked=squareMask!=0;maskScope.Enabled=mask.Checked;
+            fields.Controls.Add(maskScope,0,row++);fields.SetColumnSpan(maskScope,2);
+            mask.CheckedChanged+=(_,_)=>maskScope.Enabled=mask.Checked;
+        }
         string hint=tool switch{
-            FillTool.Square=>"Ouverture libre + diamètre = entraxe des fils.\nUn contour : les fils s’arrêtent sur cette limite.\nDeux contours : arrêt sur le contour extérieur.\nFils horizontaux devant ; verticaux interrompus aux croisements.",
+            FillTool.Square=>"Ouverture libre + diamètre = entraxe des fils.\nUn contour : les fils s’arrêtent sur cette limite.\nDeux contours : arrêt sur le contour extérieur.\nFils horizontaux devant ; verticaux interrompus aux croisements.\nExtrémités fermées ; trame centrée sans couper un fil dans sa longueur.\nMasquage limité au grillage, hors cadre.",
             FillTool.Expanded=>"ML et MW : diagonales entre axes des nœuds.\nLanières continues, plats aux jonctions et angles adoucis.\nPlat 0 : proportion automatique ; sinon longueur en mm.\nL’épaisseur est enregistrée dans la désignation.",
             _=>"T : entraxe triangulaire à 60°. U : trame alignée.\nSeuls les trous entiers sont dessinés ; la bordure reste pleine.\nL’épaisseur est enregistrée dans la désignation."};
         var help=new Label{Text=hint,AutoSize=true,MaximumSize=new(365,0),ForeColor=Color.DimGray,Padding=new(0,16,0,0)};fields.Controls.Add(help,0,row);fields.SetColumnSpan(help,2);

@@ -84,6 +84,16 @@ static class Program
    using var timer=new System.Windows.Forms.Timer{Interval=60};timer.Tick+=(_,_)=>{timer.Stop();f.CancelButton!.PerformClick();};timer.Start();
    Check(f.ShowDialog()==DialogResult.Cancel&&f.ToolSettings==initial,"Annuler conserve toutes les pages et l’outil initial");
   }
+  foreach(int maskMode in new[]{0,1,2})foreach(bool cancel in new[]{false,true}){
+   using var f=new MeshForm(initial with{Tool=FillTool.Square,SquareMask=2});
+   var page=Field<Dictionary<FillTool,PatternPage>>(f,"pages")[FillTool.Square];
+   Check(page.Mask==2,"Masquage : restauration du choix");
+   Field<CheckBox>(page,"mask").Checked=maskMode!=0;Field<ComboBox>(page,"maskScope").SelectedIndex=maskMode==2?1:0;
+   Field<ToolNavigation>(f,"navigation").SelectTool("metal-deploye");Field<ToolNavigation>(f,"navigation").SelectTool("grillage-carre");
+   Check(page.Mask==maskMode,"Masquage : navigation conserve le choix "+maskMode);
+   using var timer=new System.Windows.Forms.Timer{Interval=60};timer.Tick+=(_,_)=>{timer.Stop();if(cancel)f.CancelButton!.PerformClick();else f.AcceptButton!.PerformClick();};timer.Start();
+   Check(f.ShowDialog()==(cancel?DialogResult.Cancel:DialogResult.OK)&&f.ToolSettings.SquareMask==(cancel?2:maskMode),"Masquage : validation/annulation "+maskMode+" "+cancel);
+  }
   foreach(int mode in new[]{0,1,2}){
    using var f=new MeshForm(initial with{Tool=FillTool.Square,Square=initial.Square with{Pattern=mode}});
    var page=Field<Dictionary<FillTool,PatternPage>>(f,"pages")[FillTool.Square];

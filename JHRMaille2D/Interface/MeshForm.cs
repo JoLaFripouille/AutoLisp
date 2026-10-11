@@ -96,7 +96,7 @@ public sealed class MeshForm : Form
         family.SelectedItem=product!=null&&product.Matches(s)?product.Family:"Personnalisée · saisie libre";
         catalogUpdating=false;PopulateDiameters(s.ProductReference);
         foreach(var tool in new[]{FillTool.Square,FillTool.Expanded,FillTool.Perforated}){
-            var page=new PatternPage(tool,tools.Pattern(tool)){Visible=false};
+            var page=new PatternPage(tool,tools.Pattern(tool),tools.SquareMask){Visible=false};
             page.Accepted+=Finish;page.Cancelled+=()=>{DialogResult=DialogResult.Cancel;Close();};pages.Add(tool,page);pageHost.Controls.Add(page);
         }
         navigation.ToolSelected+=key=>ShowTool(key switch{"grillage-carre"=>FillTool.Square,"metal-deploye"=>FillTool.Expanded,"tole-perforee"=>FillTool.Perforated,_=>FillTool.Mesh});
@@ -107,7 +107,7 @@ public sealed class MeshForm : Form
     void ShowTool(FillTool tool){selectedTool=tool;meshPage.Visible=tool==FillTool.Mesh;foreach(var item in pages)item.Value.Visible=item.Key==tool;
         if(tool==FillTool.Mesh){meshPage.BringToFront();AcceptButton=accept;CancelButton=meshCancel;}
         else{pages[tool].BringToFront();AcceptButton=pages[tool].Accept;CancelButton=pages[tool].Cancel;}}
-    FillSettings ReadTools(){var state=initialTools with{Tool=selectedTool,Mesh=Read()};foreach(var item in pages)state=state.WithPattern(item.Key,item.Value.Read());return state;}
+    FillSettings ReadTools(){var state=initialTools with{Tool=selectedTool,Mesh=Read()};foreach(var item in pages)state=state.WithPattern(item.Key,item.Value.Read());return state with{SquareMask=pages[FillTool.Square].Mask};}
     void Finish(){var candidate=ReadTools();if(candidate.Validate()!=null)return;ToolSettings=candidate;Settings=candidate.Mesh;DialogResult=DialogResult.OK;Close();}
     MeshSettings Read()=>new((double)numbers["width"].Value,(double)numbers["height"].Value,(double)numbers["wire"].Value,
         (double)numbers["lace"].Value,(double)numbers["gap"].Value,(double)numbers["angle"].Value,mode.SelectedIndex==1,corners.Checked,
