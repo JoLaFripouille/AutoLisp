@@ -1,4 +1,4 @@
-# JHR Panneaux 1.4.2 — JHRMAILLE en plugin .NET
+# JHR Panneaux 1.4.3 — JHRMAILLE en plugin .NET
 
 Créer et modifier des panneaux 2D : **filet inox losange**, **grillage serrurier carré**,
 **métal déployé** et **tôle perforée**. Le calcul, les transactions et la fenêtre fonctionnent
@@ -10,7 +10,7 @@ Paquet autonome pour **AutoCAD / Advance Steel 2027 Windows x64, .NET 10**.
 Copier `JHR.Panneaux.bundle` dans `%APPDATA%/Autodesk/ApplicationPlugins`, ou lancer
 `InstallPlugin.ps1` depuis ce dossier. Il sauvegarde un éventuel paquet existant.
 Redémarrer AutoCAD après avoir enregistré ses plans pour contrôler l’autoload.
-Pour la session courante : **NETLOAD** → `JhrMaillePlugin_v1_4_2_final.dll`.
+Pour la session courante : **NETLOAD** → `JhrMaillePlugin_v1_4_3_final.dll`.
 Le plugin ne change pas les réglages de sécurité. Un avertissement de sécurité doit être
 traité par l’utilisateur selon les règles de son installation.
 
@@ -80,3 +80,11 @@ sans écriture et lots atomiques. Aucun pilotage de fenêtre ni lecture de tout 
 Les essais sont décrits dans [VALIDATION_NET.md](VALIDATION_NET.md).
 L’autoload après redémarrage reste à vérifier sur cette installation ; les fonctions ont
 été testées dans une session AutoCAD 2027 chargée par NETLOAD, dans un DWG séparé.
+
+## Interface 1.4.3
+
+Navigation sombre avec pictogrammes, sections de réglages, champs plus lisibles,
+boutons arrondis et commandes fixes en bas. En saisie libre, les champs fabricant
+sans objet sont masqués ; choisir une gamme Jakob les affiche automatiquement.
+L’inspecteur reste redimensionnable et les réglages supplémentaires défilent.
+Les aperçus, annulations et paramètres de panneau conservent leur fonctionnement.

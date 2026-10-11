@@ -33,5 +33,5 @@ public static class LegacyDialog
         }
     }
     [LispFunction("jhr:maille-ui-version-v140")]
-    public static string Version(ResultBuffer args)=>"1.4.2";
+    public static string Version(ResultBuffer args)=>"1.4.3";
 }

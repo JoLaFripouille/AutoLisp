@@ -6,18 +6,22 @@ public sealed class MeshForm : Form
     public event Action<FillSettings>? ApplyRequested;
     public FillSettings Draft=>ReadTools();
     public void SelectTool(FillTool tool)=>navigation.SelectTool(ToolKey(tool));
-    readonly Label liveStatus=new(){Dock=DockStyle.Top,Height=56,Padding=new(12,5,12,4)};
-    readonly Button contours=new(){Text="Resélectionner les contours",Dock=DockStyle.Top,Height=30};
+    readonly Label liveStatus=new(){Dock=DockStyle.Fill,Padding=new(2,2,2,2),Font=new Font("Segoe UI",9),AutoEllipsis=true};
+    readonly Button contours=new ModernButton{Text="Choisir les contours",Dock=DockStyle.Fill};
     public event Action? ContoursRequested;
     public void LiveMode(string status){
         Text="JHR Panneaux — aperçu dans le dessin";liveStatus.Text=status;liveStatus.ForeColor=Color.FromArgb(35,78,95);
-        Controls.Add(contours);Controls.Add(liveStatus);contours.Click+=(_,_)=>ContoursRequested?.Invoke();
+        var banner=new TableLayoutPanel{Dock=DockStyle.Top,Height=82,BackColor=Color.White,Padding=new(20,12,20,10),ColumnCount=2,RowCount=2,Margin=Padding.Empty};
+        banner.ColumnStyles.Add(new(SizeType.Percent,100));banner.ColumnStyles.Add(new(SizeType.Absolute,172));banner.RowStyles.Add(new(SizeType.Absolute,23));banner.RowStyles.Add(new(SizeType.Percent,100));
+        banner.Controls.Add(new Label{Text="APERÇU DANS LE DESSIN",AutoSize=true,ForeColor=UiTheme.Accent,Font=new Font("Segoe UI",9,FontStyle.Bold)},0,0);
+        banner.Controls.Add(liveStatus,0,1);UiTheme.Button(contours);contours.MinimumSize=new(160,40);contours.Margin=new(8,7,0,7);banner.Controls.Add(contours,1,0);banner.SetRowSpan(contours,2);Controls.Add(banner);
+        contours.Click+=(_,_)=>ContoursRequested?.Invoke();
         foreach(var b in pages.Values)b.Accept.Text="Appliquer";accept.Text="Appliquer";
         Shown+=(_,_)=>{
             // Compact inspector: the actual panel is previewed in the DWG alongside it.
             void Compact(Control control){foreach(Control child in control.Controls)Compact(child);if(control is TableLayoutPanel table&&table.ColumnCount==2&&table.RowCount==3){table.ColumnStyles[0].SizeType=SizeType.Percent;table.ColumnStyles[0].Width=100;table.ColumnStyles[1].SizeType=SizeType.Absolute;table.ColumnStyles[1].Width=0;foreach(Control child in table.Controls)if(table.GetColumn(child)==1&&table.GetRow(child)==1)child.Visible=false;}}
-            Compact(this);var shell=Controls.OfType<TableLayoutPanel>().First();shell.ColumnStyles[0].Width=190;
-            MinimumSize=new(700,690);Size=new(740,Math.Min(820,Screen.FromControl(this).WorkingArea.Height-180));Location=new(Screen.FromControl(this).WorkingArea.Left+16,150);
+            Compact(this);shell.ColumnStyles[0].Width=206;
+            MinimumSize=new(740,700);Size=new(790,Math.Min(870,Screen.FromControl(this).WorkingArea.Height-110));Location=new(Screen.FromControl(this).WorkingArea.Left+16,80);
             foreach(var page in pages.Values)page.Live=true;UpdatePreview();
         };
         KeyPreview=true;KeyDown+=(_,e)=>{if(e.KeyCode==Keys.Escape){e.Handled=true;Close();}};
@@ -30,6 +34,7 @@ public sealed class MeshForm : Form
     public FillSettings ToolSettings {get;private set;}
     readonly Dictionary<FillTool,PatternPage> pages=new();
     readonly Panel pageHost=new(){Dock=DockStyle.Fill};
+    TableLayoutPanel shell=null!;
     TableLayoutPanel meshPage=null!;
     FillTool selectedTool;
     Button meshCancel=null!;
@@ -42,21 +47,22 @@ public sealed class MeshForm : Form
     readonly ComboBox reference=new(){DropDownStyle=ComboBoxStyle.DropDownList,Dock=DockStyle.Fill,DropDownWidth=520};
     readonly Label productInfo=new(){AutoSize=true,MaximumSize=new(370,0),ForeColor=Color.FromArgb(48,73,79),Padding=new(0,5,0,12)};
     bool catalogUpdating;
+    readonly List<Control> catalogueDetails=new();
     readonly CheckBox corners=new(){Text="Compléter les angles automatiquement",AutoSize=true,Checked=true};
     readonly CheckBox dimensions=new(){Text="Afficher les diagonales entre centres",AutoSize=true};
     readonly Label error=new(){Dock=DockStyle.Fill,ForeColor=Color.Firebrick,AutoSize=true};
     readonly Label caption=new(){AutoSize=true,ForeColor=Color.FromArgb(48,73,79),Padding=new(0,8,0,8)};
-    readonly Button accept=new(){Text="Valider les paramètres",AutoSize=true,Height=36};
+    readonly Button accept=new ModernButton{Text="Continuer",AutoSize=true,Height=36};
     bool setting;
     public MeshForm(MeshSettings s):this(new FillSettings{Mesh=s}){}
     public MeshForm(FillSettings tools)
     {
         var s=tools.Mesh;initialTools=tools;ToolSettings=tools;
-        initial=s;Settings=s;Text="JHRMAILLE · Outils de remplissage";Font=new Font("Segoe UI",10);
+        initial=s;Settings=s;Text="JHRMAILLE · Outils de remplissage";Font=new Font("Segoe UI",10);ForeColor=UiTheme.Ink;
         AutoScaleMode=AutoScaleMode.Dpi;ClientSize=new(1370,860);MinimumSize=new(1200,740);
-        StartPosition=FormStartPosition.CenterParent;BackColor=Color.FromArgb(244,247,246);
+        StartPosition=FormStartPosition.CenterParent;BackColor=UiTheme.Canvas;
         MinimizeBox=false;MaximizeBox=true;ShowInTaskbar=false;
-        var shell=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Margin=Padding.Empty};
+        shell=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Margin=Padding.Empty};
         shell.ColumnStyles.Add(new(SizeType.Absolute,210));shell.ColumnStyles.Add(new(SizeType.Percent,100));
         shell.RowStyles.Add(new(SizeType.Percent,100));Controls.Add(shell);
         navigation.AddTool("filet-inox-losange","Filet inox losange");
@@ -64,14 +70,15 @@ public sealed class MeshForm : Form
         navigation.AddTool("metal-deploye","Métal déployé");
         navigation.AddTool("tole-perforee","Tôle perforée");
         shell.Controls.Add(navigation,0,0);shell.Controls.Add(pageHost,1,0);
-        var layout=new TableLayoutPanel{Dock=DockStyle.Fill,Padding=new(20),ColumnCount=2,RowCount=3};
+        var layout=new TableLayoutPanel{Dock=DockStyle.Fill,Padding=new(24,24,24,18),ColumnCount=2,RowCount=3};
         layout.ColumnStyles.Add(new(SizeType.Absolute,410));layout.ColumnStyles.Add(new(SizeType.Percent,100));
-        layout.RowStyles.Add(new(SizeType.Absolute,65));layout.RowStyles.Add(new(SizeType.Percent,100));layout.RowStyles.Add(new(SizeType.Absolute,86));meshPage=layout;pageHost.Controls.Add(layout);
-        var title=new Label{Text="Filet inox losange",Font=new Font(Font.FontFamily,18,FontStyle.Bold),AutoSize=true};
+        layout.RowStyles.Add(new(SizeType.Absolute,82));layout.RowStyles.Add(new(SizeType.Percent,100));layout.RowStyles.Add(new(SizeType.Absolute,78));meshPage=layout;pageHost.Controls.Add(layout);
+        var title=UiTheme.Header("Filet inox losange","Câbles inox • jonctions serties ou tressées");
         layout.Controls.Add(title,0,0);layout.SetColumnSpan(title,2);
-        var fields=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,AutoScroll=true,Padding=new(0,0,16,0)};
+        var fields=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,AutoScroll=true,Padding=new(0,0,12,0)};
         fields.ColumnStyles.Add(new(SizeType.Percent,57));fields.ColumnStyles.Add(new(SizeType.Percent,43));layout.Controls.Add(fields,0,1);
         int row=0;
+        UiTheme.Section(fields,ref row,"Catalogue fabricant");
         void Label(string t){var l=new Label{Text=t,AutoSize=true,Padding=new(0,8,0,6)};fields.Controls.Add(l,0,row);}
         void Number(string key,string label,double value,decimal min=.01m,decimal max=10000, int decimals=2)
         {
@@ -80,10 +87,11 @@ public sealed class MeshForm : Form
         }
         Label("Gamme Jakob");fields.SetColumnSpan(fields.GetControlFromPosition(0,row)!,2);row++;
         fields.Controls.Add(family,0,row++);fields.SetColumnSpan(family,2);
-        Label("Diamètre proposé");fields.Controls.Add(diameter,1,row++);
-        Label("Référence et maille");fields.SetColumnSpan(fields.GetControlFromPosition(0,row)!,2);row++;
+        Label("Diamètre proposé");catalogueDetails.Add(fields.GetControlFromPosition(0,row)!);catalogueDetails.Add(diameter);fields.Controls.Add(diameter,1,row++);
+        Label("Référence et maille");catalogueDetails.Add(fields.GetControlFromPosition(0,row)!);catalogueDetails.Add(reference);fields.SetColumnSpan(fields.GetControlFromPosition(0,row)!,2);row++;
         fields.Controls.Add(reference,0,row++);fields.SetColumnSpan(reference,2);
         fields.Controls.Add(productInfo,0,row++);fields.SetColumnSpan(productInfo,2);
+        UiTheme.Section(fields,ref row,"Maille");
         Label("Jonctions");fields.SetColumnSpan(fields.GetControlFromPosition(0,row)!,2);row++;
         mode.Items.AddRange(["Avec bagues serties","Tressées · sans bagues"]);fields.Controls.Add(mode,0,row++);fields.SetColumnSpan(mode,2);
         Number("wire","Câble de maille Ø (mm)",s.Wire,.1m,20);
@@ -91,9 +99,11 @@ public sealed class MeshForm : Form
         Number("height","Hauteur Y (mm)",s.Height,1,10000);
         var hint=new Label{Text="Diagonales entre centres, avant rotation.\nLes dimensions du panneau viennent des contours.",AutoSize=true,ForeColor=Color.DimGray,Padding=new(0,4,0,10)};
         fields.Controls.Add(hint,0,row++);fields.SetColumnSpan(hint,2);
+        UiTheme.Section(fields,ref row,"Montage au cadre");
         Number("lace","Câble de laçage Ø (mm)",s.Lace,.1m,20);
         Number("gap","Retrait au cadre (mm)",s.Gap,.1m,10000);
         Number("angle","Orientation (degrés)",s.Angle,-360,360,1);
+        UiTheme.Section(fields,ref row,"Finition des jonctions");
         Number("sleeveL","Longueur de bague (mm)",s.SleeveLength,.1m,100);
         Number("sleeveH","Hauteur de bague (mm)",s.SleeveHeight,.1m,100);
         Number("stops","Pas des butées de rive",s.Stops,1,1000,0);
@@ -103,8 +113,8 @@ public sealed class MeshForm : Form
         side.Controls.Add(new Label{Text="Aperçu des câbles et des jonctions",AutoSize=true,Font=new Font(Font,FontStyle.Bold)},0,0);
         side.Controls.Add(preview,0,1);side.Controls.Add(caption,0,2);side.Controls.Add(dimensions,0,3);
         var footer=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=3,RowCount=1};footer.ColumnStyles.Add(new(SizeType.Percent,100));footer.ColumnStyles.Add(new(SizeType.AutoSize));footer.ColumnStyles.Add(new(SizeType.AutoSize));layout.Controls.Add(footer,0,2);layout.SetColumnSpan(footer,2);
-        footer.Controls.Add(error,0,0);var cancel=new Button{Text="Annuler",DialogResult=DialogResult.Cancel,AutoSize=true,CausesValidation=false,Margin=new(10,12,10,0)};
-        meshCancel=cancel;accept.Margin=new(0,12,0,0);footer.Controls.Add(cancel,1,0);footer.Controls.Add(accept,2,0);AcceptButton=accept;CancelButton=cancel;
+        footer.Controls.Add(error,0,0);var cancel=new ModernButton{Text="Annuler",DialogResult=DialogResult.Cancel,AutoSize=true,CausesValidation=false,Margin=new(10,12,10,0)};
+        UiTheme.Button(accept,true);UiTheme.Button(cancel);meshCancel=cancel;accept.Margin=new(0,12,0,0);footer.Controls.Add(cancel,1,0);footer.Controls.Add(accept,2,0);AcceptButton=accept;CancelButton=cancel;
         accept.Click+=(_,_)=>Finish();
         mode.SelectedIndex=s.Woven?1:0;mode.SelectedIndexChanged+=(_,_)=>UpdatePreview();
         corners.CheckedChanged+=(_,_)=>UpdatePreview();dimensions.CheckedChanged+=(_,_)=>UpdatePreview();
@@ -124,7 +134,7 @@ public sealed class MeshForm : Form
         }
         navigation.ToolSelected+=key=>ShowTool(key switch{"grillage-carre"=>FillTool.Square,"metal-deploye"=>FillTool.Expanded,"tole-perforee"=>FillTool.Perforated,_=>FillTool.Mesh});
         if(tools.Tool!=FillTool.Mesh)navigation.SelectTool(ToolKey(tools.Tool));
-        Shown+=(_,_)=>UpdatePreview();UpdatePreview();
+        UiTheme.Style(this);Shown+=(_,_)=>UpdatePreview();UpdatePreview();
     }
     public static string ToolKey(FillTool tool)=>tool switch{FillTool.Square=>"grillage-carre",FillTool.Expanded=>"metal-deploye",FillTool.Perforated=>"tole-perforee",_=>"filet-inox-losange"};
     void ShowTool(FillTool tool){selectedTool=tool;meshPage.Visible=tool==FillTool.Mesh;foreach(var item in pages)item.Value.Visible=item.Key==tool;
@@ -176,6 +186,7 @@ public sealed class MeshForm : Form
             }
             foreach(var k in new[]{"wire","width","height"})numbers[k].Enabled=product==null;
             mode.Enabled=product==null;diameter.Enabled=reference.Enabled=family.SelectedIndex>0;
+            foreach(var control in catalogueDetails)control.Visible=family.SelectedIndex>0;
             productInfo.Text=product==null?"Valeurs libres. Choisir une gamme pour utiliser une référence fabricant.":
                 $"{product.Material} · câble {product.Construction}\nCatalogue {JakobCatalogue.Data.Edition} · page {product.PdfPage} · {product.WeightKgM2:g} kg/m²"+
                 (product.RollHeightMm is double rh?$"\nRouleau {rh:g} × {product.RollLengthMm:g} mm · filet {product.BaseReference}":$"\nLongueur max. de production catalogue : {product.MaxProductionLengthM:g} m");
@@ -188,7 +199,7 @@ public sealed class MeshForm : Form
         setting=true;
         try
         {
-            var s=Read();var message=s.Validate();accept.Enabled=message==null;error.ForeColor=message==null?Color.DimGray:Color.Firebrick;error.Text=message??(ApplyRequested!=null?"Aperçu dans le dessin. Appliquer pour valider.":"Valider, puis sélectionner le contour intérieur\net le contour extérieur du cadre.");
+            var s=Read();var message=s.Validate();accept.Enabled=message==null;error.ForeColor=message==null?Color.DimGray:Color.Firebrick;error.Text=message??(ApplyRequested!=null?"Aperçu en direct.\nAppliquer pour enregistrer.":"Valider, puis sélectionner le contour intérieur\net le contour extérieur du cadre.");
             numbers["sleeveL"].Enabled=numbers["sleeveH"].Enabled=!s.Woven&&SelectedProduct==null;
             if(message==null){preview.Settings=s;preview.Dimensions=dimensions.Checked;preview.Invalidate();}
             caption.Text=$"X {s.Width:g} × Y {s.Height:g} mm  ·  câble Ø{s.Wire:g} mm  ·  {s.Angle:g}°";

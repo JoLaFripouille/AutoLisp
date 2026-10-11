@@ -1,4 +1,4 @@
-# Validation .NET 1.4.2 — 11/10/2026
+# Validation .NET 1.4.3 — 11/10/2026
 
 - Compilation .NET 10 / SDK AutoCAD 2027 : zéro erreur et avertissement.
 - Interface : quatre outils, paramètres conservés, valeurs invalides refusées,
@@ -31,3 +31,12 @@ Le bundle est installé ; le chargement automatique après redémarrage reste à
 contrôler. La session courante utilise NETLOAD. Le Core Console de l’installation
 échoue avant chargement du plugin : ce mode n’est pas validé.
 Aucun plan client n’a reçu d’écriture de test.
+
+## Interface 1.4.3
+
+Compilation sans avertissement ; suite des quatre pages, masquages, contours,
+valeurs invalides, validation/annulation et 202 choix Jakob entièrement passée.
+Contrôle visuel dans AutoCAD : formulaire compact, catégories, champs personnalisés
+simplifiés, boutons fixes, clic réel de navigation vers le grillage, aperçu du
+déployé et Annuler qui restitue le filet. Révision du panneau identique après
+Annuler ; DBLCLKEDIT restauré à 1. Aucun changement de dessin hors DWG de test.

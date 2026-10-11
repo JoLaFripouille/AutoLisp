@@ -55,7 +55,7 @@ internal static class PanelStore
     }
     internal static ObjectId Commit(Database db,PanelData data,Matrix3d transform,ObjectId target=default,GeometryResult? cached=null)
     {
-        data=data with{Engine="1.4.2",LegacyDefaults=false};data.Validate();var geometry=cached??PanelGeometry.Generate(data);using var tx=db.TransactionManager.StartTransaction();HiddenType(db,tx);
+        data=data with{Engine="1.4.3",LegacyDefaults=false};data.Validate();var geometry=cached??PanelGeometry.Generate(data);using var tx=db.TransactionManager.StartTransaction();HiddenType(db,tx);
         var entities=PanelGeometry.Entities(geometry,data);try{
             var table=(BlockTable)tx.GetObject(db.BlockTableId,OpenMode.ForWrite);string stem=data.Settings.Tool switch{FillTool.Mesh=>"PANNEAU_FILET_INOX_",FillTool.Square=>"PANNEAU_GRILLAGE_CARRE_",FillTool.Expanded=>"PANNEAU_METAL_DEPLOYE_",_=>"PANNEAU_TOLE_PERFOREE_"};string dims=$"{geometry.Width:0.##}x{geometry.Height:0.##}".Replace(',','.');string name=stem+dims;int index=1;while(table.Has(name+"_"+index))index++;var def=new BlockTableRecord{Name=name+"_"+index};table.Add(def);tx.AddNewlyCreatedDBObject(def,true);foreach(var e in entities){def.AppendEntity(e);tx.AddNewlyCreatedDBObject(e,true);}
             var ids=new ObjectIdCollection();foreach(var e in entities.Where(e=>e is Wipeout))ids.Add(e.ObjectId);if(ids.Count>0)((DrawOrderTable)tx.GetObject(def.DrawOrderTableId,OpenMode.ForWrite)).MoveToBottom(ids);
