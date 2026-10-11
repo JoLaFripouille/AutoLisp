@@ -53,6 +53,15 @@ static class Program
  static void PatternTests(string output)
  {
   var initial=new FillSettings();
+  var expanded=new PatternSettings(40,20,2,1.5);
+  Check(Math.Abs(ExpandedGeometry.Bond(expanded)-4.8)<1e-8,"Déployé : plat automatique proportionné");
+  Check(ExpandedGeometry.Bond(expanded with{Margin=7})==7,"Déployé : longueur de plat personnalisée");
+  Check((expanded with{Margin=20}).Validate(FillTool.Expanded)!=null,"Déployé : plat incompatible refusé");
+  var hole=ExpandedGeometry.Hole(expanded);
+  Check(hole.Length==30&&hole.All(q=>Math.Abs(q.X)<20&&Math.Abs(q.Y)<10),"Déployé : ouverture fermée adoucie dans les diagonales");
+  Check(hole.Zip(hole.Skip(1).Append(hole[0])).Count(pair=>Math.Abs(pair.First.Y-pair.Second.Y)<1e-8&&Math.Abs(pair.First.X-pair.Second.X)>1e-7)>=2,"Déployé : plats horizontaux conservés");
+  File.WriteAllLines(Path.Combine(output,"deploye-coordonnees.csv"),hole.Select(q=>$"{q.X.ToString("R",CultureInfo.InvariantCulture)},{q.Y.ToString("R",CultureInfo.InvariantCulture)}"));
+
   Check(initial.ExtraValues().Length==25,"Contrat des trois nouveaux outils : 25 valeurs");
   Check((initial.Perforated with{A=10}).Validate(FillTool.Perforated)!=null,"Perforations jointives refusées");
   Check((initial.Expanded with{Wire=8}).Validate(FillTool.Expanded)!=null,"Lanière trop large refusée");

@@ -33,11 +33,12 @@ public sealed class PatternPage : UserControl
         if(tool!=FillTool.Perforated)Number("wire",tool==FillTool.Square?"Diamètre du fil (mm)":"Largeur projetée de lanière (mm)",s.Wire);
         if(tool!=FillTool.Square)Number("thickness","Épaisseur matière (mm)",s.Thickness);
         Number("gap","Retrait au cadre (mm)",s.Gap,0);
+        if(tool==FillTool.Expanded)Number("margin","Plat de jonction (0 = auto)",s.Margin,0);
         if(tool==FillTool.Perforated)Number("margin","Bordure pleine minimum (mm)",s.Margin,0);
         Number("angle","Orientation (degrés)",s.Angle,-360,360);
         string hint=tool switch{
             FillTool.Square=>"Ouverture libre + diamètre = entraxe des fils.\nUn contour : les fils s’arrêtent sur cette limite.\nDeux contours : arrêt sur le contour extérieur.\nFils horizontaux devant ; verticaux interrompus aux croisements.",
-            FillTool.Expanded=>"ML et MW : diagonales entre axes des nœuds.\nLa lanière indique la largeur visible en projection 2D.\nL’épaisseur est enregistrée dans la désignation.",
+            FillTool.Expanded=>"ML et MW : diagonales entre axes des nœuds.\nLanières continues, plats aux jonctions et angles adoucis.\nPlat 0 : proportion automatique ; sinon longueur en mm.\nL’épaisseur est enregistrée dans la désignation.",
             _=>"T : entraxe triangulaire à 60°. U : trame alignée.\nSeuls les trous entiers sont dessinés ; la bordure reste pleine.\nL’épaisseur est enregistrée dans la désignation."};
         var help=new Label{Text=hint,AutoSize=true,MaximumSize=new(365,0),ForeColor=Color.DimGray,Padding=new(0,16,0,0)};fields.Controls.Add(help,0,row);fields.SetColumnSpan(help,2);
         var side=new TableLayoutPanel{Dock=DockStyle.Fill,RowCount=4,Padding=new(12,0,0,0)};

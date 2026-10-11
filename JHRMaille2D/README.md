@@ -1,17 +1,19 @@
-# JHRMAILLE 1.3.1 — panneaux de remplissage en 2D
+# JHRMAILLE 1.3.2 — panneaux de remplissage en 2D
 
 Commande AutoLISP avec une interface commune pour créer des panneaux : **filet inox losange**, **grillage serrurier à maille carrée**, **métal déployé** et **tôle perforée**. Chaque outil possède ses réglages et son aperçu. Le filet conserve les références Jakob Webnet et son laçage adapté au cadre.
 
-![Interface des quatre outils](Apercu_interface.png)
+![Interface JHRMAILLE](Apercu_interface.png)
 
-![Panneaux générés dans AutoCAD](Apercu_panneaux.png)
+![Les quatre panneaux](Apercu_panneaux.png)
+
+![Détail du déployé corrigé](Apercu_deploye.png)
 
 ## Installation
 
-Télécharger le dossier complet **JHRMaille2D** du dépôt, ou l’archive du dépôt : le LISP seul ne contient pas l’interface. Les deux fichiers nécessaires sont `JHR_Maille_2D.lsp` et `JhrMailleUi_v1_3_1.dll`.
+Télécharger le dossier complet **JHRMaille2D** du dépôt, ou l’archive du dépôt : le LISP seul ne contient pas l’interface. Les deux fichiers nécessaires sont `JHR_Maille_2D.lsp` et `JhrMailleUi_v1_3_2.dll`.
 
 1. Dans AutoCAD pour Windows, charger `JHR_Maille_2D.lsp` avec **APPLOAD**.
-2. Charger `JhrMailleUi_v1_3_1.dll` avec **NETLOAD**. Cette étape n’est pas nécessaire si le dossier est déjà dans les chemins de recherche et que le LISP trouve la DLL automatiquement.
+2. Charger `JhrMailleUi_v1_3_2.dll` avec **NETLOAD**. Cette étape n’est pas nécessaire si le dossier est déjà dans les chemins de recherche et que le LISP trouve la DLL automatiquement.
 3. Respecter les règles de sécurité de l’installation. L’outil ne modifie pas SECURELOAD ou TRUSTEDPATHS.
 4. Lancer **JHRMAILLEPARAM** pour vérifier que la fenêtre s’ouvre, puis **JHRMAILLE** pour créer un panneau.
 
@@ -63,7 +65,9 @@ Les traits cachés utilisent le type de ligne local **JHR_CACHE**, motif 4 mm / 
 
 ## Métal déployé
 
-Régler la **grande diagonale ML**, la **petite diagonale MW**, la **largeur visible de lanière en projection**, l’épaisseur et l’orientation. ML/MW décrivent les diagonales entre axes des nœuds, avant rotation. Le dessin est une projection générique de lanières losangées, découpée suivant le contour intérieur et le retrait demandé.
+Régler la **grande diagonale ML**, la **petite diagonale MW**, la **largeur visible de lanière en projection**, l’épaisseur et l’orientation. ML/MW décrivent les diagonales entre axes des nœuds, avant rotation. Le dessin est une projection générique de lanières continues, reliées par de petits plats aux jonctions et des angles adoucis. Les contours des ouvertures sont dessinés sans largeur de polyligne ; il n’y a plus de croisements en X de traits épais. La découpe suit le contour intérieur et le retrait demandé ; les ouvertures coupées par le bord restent ouvertes.
+
+Le champ **Plat de jonction (0 = auto)** règle la longueur du plat entre les branches. À 0, la longueur est proportionnée aux diagonales et à la largeur de lanière : `min(0,35 × ML ; max(2 × lanière ; min(0,12 × ML ; 0,25 × MW)))`. Exemple : ML40 / MW20 / lanière2 → plat4,8 mm. Une valeur positive fixe la longueur en millimètres ; elle doit être inférieure à ML/2. Les petits arrondis sont déduits de la lanière et des longueurs disponibles, par approximation en segments. Ces formes reprennent le principe de l’image de référence de l’utilisateur ; les rayons et plats automatiques ne sont pas des cotes certifiées d’un fabricant.
 
 **Aplati** et **en relief** ont la même géométrie de face 2D ; l’aperçu et la désignation différencient l’aspect. L’épaisseur est conservée dans les données du panneau ; elle ne crée pas une géométrie 3D ni une coupe d’épaisseur.
 
@@ -128,3 +132,6 @@ Validation du 10 octobre 2026 : compilation sans avertissement ; les 202 référ
 Validation complémentaire du 11 octobre 2026 : compilation sans avertissement ; quatre pages testées, paramètres conservés en navigation, trois modes de sélection du grillage ; 17 panneaux natifs sur rectangles, trapèzes, contours concaves et motifs tournés. Contrôle des deux bords des fils, des interruptions aux croisements et de la bande en traits cachés ; diamètre et pas des perforations, 5 691 centres de trous avec leur bordure minimale ; 12 369 composants audités sur calque 0 avec couleur et épaisseur DuCalque. Création par les commandes complètes et annulation en une étape pour chacun des trois nouveaux outils et les trois modes du grillage ; dimensions de nom après retrait vérifiées. Les motifs trop denses et les bordures impossibles sont refusés sans objets résiduels. Tous les essais ont utilisé des dessins séparés.
 
 Limite pour les nouveaux outils : **15 000 positions de trame examinées**. Diviser un grand panneau ou augmenter le pas si cette limite est atteinte. Le grillage à deux bords et la tôle perforée détaillée créent davantage d’entités qu’une représentation schématique.
+
+
+Correction 1.3.2 du 11 octobre 2026 : métal déployé redessiné avec plats de jonction, contours continus et raccords adoucis, à partir de l’image fournie. L’aperçu .NET et le contour AutoLISP ont 30 points identiques à 10⁻¹⁰ mm près pour le cas ML40 / MW20 / lanière2. Six panneaux natifs vérifiés : automatique, plat7, trapèze, concave, rotation17°, relief60×30. Tous les sommets des contours restent dans le panneau source ; 6 534 polylignes auditées sans largeur et sur calque0 / DuCalque. Commande complète, désignation avec plat, annulation en une étape et refus des plats incompatibles / motifs trop denses validés. Les trois autres outils et les références Jakob sont conservés.

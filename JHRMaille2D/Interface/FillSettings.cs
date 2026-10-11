@@ -8,7 +8,7 @@ public sealed record PatternSettings(double A,double B,double Wire,double Thickn
         if(Values().Any(x=>!double.IsFinite(x)))return "Saisir des nombres finis.";
         if(A<=0||B<=0||Wire<=0||Thickness<=0||Gap<0||Margin<0||Math.Abs(Angle)>360)return "VÃ©rifier les dimensions positives, le retrait et lâ€™orientation.";
         if(tool==FillTool.Square && (Pattern is <0 or >2 || Wire>=A))return "Le diamÃ¨tre du fil doit Ãªtre infÃ©rieur Ã  lâ€™ouverture libre.";
-        if(tool==FillTool.Expanded && (A<B || Wire>=Math.Min(A,B)/3 || Pattern is <0 or >1))return "La grande diagonale doit dÃ©passer la petite ; la laniÃ¨re doit Ãªtre infÃ©rieure au tiers de la petite diagonale.";
+        if(tool==FillTool.Expanded && (A<B || Wire>=Math.Min(A,B)/3 || Margin>=A/2 || Pattern is <0 or >1))return "La grande diagonale doit dÃ©passer la petite ; la laniÃ¨re doit Ãªtre infÃ©rieure au tiers de la petite diagonale.";
         if(tool==FillTool.Perforated && (A>=B || Pattern is <0 or >2))return "Le trou doit Ãªtre plus petit que son entraxe.";
         return null;
     }
