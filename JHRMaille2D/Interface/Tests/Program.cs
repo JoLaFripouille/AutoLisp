@@ -50,6 +50,44 @@ static class Program
   }
   using(var f=new MeshForm(initial with{ProductReference="20260-0150-060"}))Check(Field<ComboBox>(f,"family").SelectedIndex==0,"Référence périmée invalidée quand les dimensions diffèrent");
  }
+ static void PatternTests(string output)
+ {
+  var initial=new FillSettings();
+  Check(initial.ExtraValues().Length==25,"Contrat des trois nouveaux outils : 25 valeurs");
+  Check((initial.Perforated with{A=10}).Validate(FillTool.Perforated)!=null,"Perforations jointives refusées");
+  Check((initial.Expanded with{Wire=8}).Validate(FillTool.Expanded)!=null,"Lanière trop large refusée");
+  foreach(var tool in new[]{FillTool.Square,FillTool.Expanded,FillTool.Perforated}){
+   using var f=new MeshForm(initial with{Tool=tool});
+   var nav=Field<ToolNavigation>(f,"navigation");var pages=Field<Dictionary<FillTool,PatternPage>>(f,"pages");var page=pages[tool];
+   Check(nav.SelectedKey==MeshForm.ToolKey(tool),"Restauration de l’outil "+tool);
+   Field<Dictionary<string,NumericUpDown>>(page,"numbers")["gap"].Value=7;
+   nav.SelectTool("filet-inox-losange");nav.SelectTool(MeshForm.ToolKey(tool));
+   Check(page.Read().Gap==7,"Navigation conserve les valeurs de "+tool);
+   using var timer=new System.Windows.Forms.Timer{Interval=100};timer.Tick+=(_,_)=>{timer.Stop();using var image=new Bitmap(f.Width,f.Height);f.DrawToBitmap(image,new Rectangle(0,0,f.Width,f.Height));image.Save(Path.Combine(output,"outil-"+tool+".png"));f.AcceptButton!.PerformClick();};timer.Start();
+   Check(f.ShowDialog()==DialogResult.OK&&f.ToolSettings.Tool==tool&&f.ToolSettings.Pattern(tool).Gap==7&&f.ToolSettings.Mesh==initial.Mesh,"Validation du bon outil et conservation du filet "+tool);
+  }
+  using(var f=new MeshForm(initial)){
+   var nav=Field<ToolNavigation>(f,"navigation");var pages=Field<Dictionary<FillTool,PatternPage>>(f,"pages");
+   nav.SelectTool("grillage-carre");Field<Dictionary<string,NumericUpDown>>(pages[FillTool.Square],"numbers")["a"].Value=42;
+   nav.SelectTool("tole-perforee");var n=Field<Dictionary<string,NumericUpDown>>(pages[FillTool.Perforated],"numbers");n["a"].Value=10;
+   Check(!pages[FillTool.Perforated].Accept.Enabled,"Paramètre invalide désactive Valider");
+   nav.SelectTool("metal-deploye");
+   using var timer=new System.Windows.Forms.Timer{Interval=60};timer.Tick+=(_,_)=>{timer.Stop();f.CancelButton!.PerformClick();};timer.Start();
+   Check(f.ShowDialog()==DialogResult.Cancel&&f.ToolSettings==initial,"Annuler conserve toutes les pages et l’outil initial");
+  }
+  foreach(int mode in new[]{0,1,2}){
+   using var f=new MeshForm(initial with{Tool=FillTool.Square,Square=initial.Square with{Pattern=mode}});
+   var page=Field<Dictionary<FillTool,PatternPage>>(f,"pages")[FillTool.Square];
+   Check(page.Read().Pattern==mode&&page.Accept.Enabled,"Grillage : restaure le mode de contour "+mode);
+   using var timer=new System.Windows.Forms.Timer{Interval=60};timer.Tick+=(_,_)=>{timer.Stop();f.AcceptButton!.PerformClick();};timer.Start();
+   Check(f.ShowDialog()==DialogResult.OK&&f.ToolSettings.Square.Pattern==mode,"Grillage : valide le mode de contour "+mode);
+  }
+  foreach(int pattern in new[]{0,1,2}){
+   using var f=new MeshForm(initial with{Tool=FillTool.Perforated,Perforated=initial.Perforated with{Pattern=pattern}});
+   using var timer=new System.Windows.Forms.Timer{Interval=60};timer.Tick+=(_,_)=>{timer.Stop();using var image=new Bitmap(f.Width,f.Height);f.DrawToBitmap(image,new Rectangle(0,0,f.Width,f.Height));image.Save(Path.Combine(output,"perforation-"+pattern+".png"));f.Close();};timer.Start();
+   Check(f.ShowDialog()==DialogResult.Cancel,"Aperçu et fermeture perforation "+pattern);
+  }
+ }
  [STAThread] static void Main(string[] args)
  {
   ApplicationConfiguration.Initialize();string output=args[0];Directory.CreateDirectory(output);
@@ -58,11 +96,12 @@ static class Program
    var nav=Field<ToolNavigation>(f,"navigation");
    Check(nav.SelectedKey=="filet-inox-losange","L’outil Filet inox losange est sélectionné à l’ouverture");
    var buttons=Field<Dictionary<string,Button>>(nav,"buttons");
-   Check(buttons.Count==1&&buttons.Values.Single().Text=="Filet inox losange","Une colonne d’outils avec le nom demandé");
+   Check(buttons.Count==4&&buttons["filet-inox-losange"].Text=="Filet inox losange","Une colonne d’outils avec le nom demandé");
    using var timer=new System.Windows.Forms.Timer{Interval=100};
-   timer.Tick+=(_,_)=>{timer.Stop();buttons.Values.Single().PerformClick();Check(f.Visible&&Field<MeshPreview>(f,"preview").Settings==s,"Cliquer sur l’outil conserve la fenêtre et les réglages");f.CancelButton!.PerformClick();};timer.Start();
+   timer.Tick+=(_,_)=>{timer.Stop();buttons["filet-inox-losange"].PerformClick();Check(f.Visible&&Field<MeshPreview>(f,"preview").Settings==s,"Cliquer sur l’outil conserve la fenêtre et les réglages");f.CancelButton!.PerformClick();};timer.Start();
    Check(f.ShowDialog()==DialogResult.Cancel&&f.Settings==s,"La navigation conserve l’annulation");
   }
+  PatternTests(output);
   CatalogueTests(s,output);
   Check((s with{Wire=20}).Validate()!=null,"Câble trop gros refusé");Check((s with{Width=2,Woven=true}).Validate()!=null,"Jonction tressée trop grande refusée");
   Check((s with{Width=double.NaN}).Validate()!=null,"Valeur non finie refusée");

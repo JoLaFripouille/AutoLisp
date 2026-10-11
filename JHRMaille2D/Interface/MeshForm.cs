@@ -3,6 +3,13 @@ public sealed class MeshForm : Form
 {
     public MeshSettings Settings {get;private set;}
     readonly MeshSettings initial;
+    readonly FillSettings initialTools;
+    public FillSettings ToolSettings {get;private set;}
+    readonly Dictionary<FillTool,PatternPage> pages=new();
+    readonly Panel pageHost=new(){Dock=DockStyle.Fill};
+    TableLayoutPanel meshPage=null!;
+    FillTool selectedTool;
+    Button meshCancel=null!;
     readonly ToolNavigation navigation=new(){Dock=DockStyle.Fill};
     readonly MeshPreview preview=new(){Dock=DockStyle.Fill};
     readonly ComboBox mode=new(){DropDownStyle=ComboBoxStyle.DropDownList,Dock=DockStyle.Fill};
@@ -18,8 +25,10 @@ public sealed class MeshForm : Form
     readonly Label caption=new(){AutoSize=true,ForeColor=Color.FromArgb(48,73,79),Padding=new(0,8,0,8)};
     readonly Button accept=new(){Text="Valider les paramètres",AutoSize=true,Height=36};
     bool setting;
-    public MeshForm(MeshSettings s)
+    public MeshForm(MeshSettings s):this(new FillSettings{Mesh=s}){}
+    public MeshForm(FillSettings tools)
     {
+        var s=tools.Mesh;initialTools=tools;ToolSettings=tools;
         initial=s;Settings=s;Text="JHRMAILLE · Outils de remplissage";Font=new Font("Segoe UI",10);
         AutoScaleMode=AutoScaleMode.Dpi;ClientSize=new(1370,860);MinimumSize=new(1200,740);
         StartPosition=FormStartPosition.CenterParent;BackColor=Color.FromArgb(244,247,246);
@@ -27,10 +36,14 @@ public sealed class MeshForm : Form
         var shell=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,Margin=Padding.Empty};
         shell.ColumnStyles.Add(new(SizeType.Absolute,210));shell.ColumnStyles.Add(new(SizeType.Percent,100));
         shell.RowStyles.Add(new(SizeType.Percent,100));Controls.Add(shell);
-        navigation.AddTool("filet-inox-losange","Filet inox losange");shell.Controls.Add(navigation,0,0);
+        navigation.AddTool("filet-inox-losange","Filet inox losange");
+        navigation.AddTool("grillage-carre","Grillage serrurier — maille carrée");
+        navigation.AddTool("metal-deploye","Métal déployé");
+        navigation.AddTool("tole-perforee","Tôle perforée");
+        shell.Controls.Add(navigation,0,0);shell.Controls.Add(pageHost,1,0);
         var layout=new TableLayoutPanel{Dock=DockStyle.Fill,Padding=new(20),ColumnCount=2,RowCount=3};
         layout.ColumnStyles.Add(new(SizeType.Absolute,410));layout.ColumnStyles.Add(new(SizeType.Percent,100));
-        layout.RowStyles.Add(new(SizeType.Absolute,65));layout.RowStyles.Add(new(SizeType.Percent,100));layout.RowStyles.Add(new(SizeType.Absolute,86));shell.Controls.Add(layout,1,0);
+        layout.RowStyles.Add(new(SizeType.Absolute,65));layout.RowStyles.Add(new(SizeType.Percent,100));layout.RowStyles.Add(new(SizeType.Absolute,86));meshPage=layout;pageHost.Controls.Add(layout);
         var title=new Label{Text="Filet inox losange",Font=new Font(Font.FontFamily,18,FontStyle.Bold),AutoSize=true};
         layout.Controls.Add(title,0,0);layout.SetColumnSpan(title,2);
         var fields=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=2,AutoScroll=true,Padding=new(0,0,16,0)};
@@ -68,11 +81,11 @@ public sealed class MeshForm : Form
         side.Controls.Add(preview,0,1);side.Controls.Add(caption,0,2);side.Controls.Add(dimensions,0,3);
         var footer=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=3,RowCount=1};footer.ColumnStyles.Add(new(SizeType.Percent,100));footer.ColumnStyles.Add(new(SizeType.AutoSize));footer.ColumnStyles.Add(new(SizeType.AutoSize));layout.Controls.Add(footer,0,2);layout.SetColumnSpan(footer,2);
         footer.Controls.Add(error,0,0);var cancel=new Button{Text="Annuler",DialogResult=DialogResult.Cancel,AutoSize=true,CausesValidation=false,Margin=new(10,12,10,0)};
-        accept.Margin=new(0,12,0,0);footer.Controls.Add(cancel,1,0);footer.Controls.Add(accept,2,0);AcceptButton=accept;CancelButton=cancel;
-        accept.Click+=(_,_)=>{var candidate=Read();if(candidate.Validate() is string msg){error.Text=msg;return;}Settings=candidate;DialogResult=DialogResult.OK;Close();};
+        meshCancel=cancel;accept.Margin=new(0,12,0,0);footer.Controls.Add(cancel,1,0);footer.Controls.Add(accept,2,0);AcceptButton=accept;CancelButton=cancel;
+        accept.Click+=(_,_)=>Finish();
         mode.SelectedIndex=s.Woven?1:0;mode.SelectedIndexChanged+=(_,_)=>UpdatePreview();
         corners.CheckedChanged+=(_,_)=>UpdatePreview();dimensions.CheckedChanged+=(_,_)=>UpdatePreview();
-        FormClosing+=(_,e)=>{if(DialogResult!=DialogResult.OK){Settings=initial;DialogResult=DialogResult.Cancel;}};
+        FormClosing+=(_,e)=>{if(DialogResult!=DialogResult.OK){Settings=initial;ToolSettings=initialTools;DialogResult=DialogResult.Cancel;}};
         family.Items.Add("Personnalisée · saisie libre");
         foreach(var name in JakobCatalogue.Items.Select(x=>x.Family).Distinct())family.Items.Add(name);
         family.SelectedIndexChanged+=(_,_)=>PopulateDiameters();
@@ -82,8 +95,20 @@ public sealed class MeshForm : Form
         catalogUpdating=true;
         family.SelectedItem=product!=null&&product.Matches(s)?product.Family:"Personnalisée · saisie libre";
         catalogUpdating=false;PopulateDiameters(s.ProductReference);
+        foreach(var tool in new[]{FillTool.Square,FillTool.Expanded,FillTool.Perforated}){
+            var page=new PatternPage(tool,tools.Pattern(tool)){Visible=false};
+            page.Accepted+=Finish;page.Cancelled+=()=>{DialogResult=DialogResult.Cancel;Close();};pages.Add(tool,page);pageHost.Controls.Add(page);
+        }
+        navigation.ToolSelected+=key=>ShowTool(key switch{"grillage-carre"=>FillTool.Square,"metal-deploye"=>FillTool.Expanded,"tole-perforee"=>FillTool.Perforated,_=>FillTool.Mesh});
+        if(tools.Tool!=FillTool.Mesh)navigation.SelectTool(ToolKey(tools.Tool));
         Shown+=(_,_)=>UpdatePreview();UpdatePreview();
     }
+    public static string ToolKey(FillTool tool)=>tool switch{FillTool.Square=>"grillage-carre",FillTool.Expanded=>"metal-deploye",FillTool.Perforated=>"tole-perforee",_=>"filet-inox-losange"};
+    void ShowTool(FillTool tool){selectedTool=tool;meshPage.Visible=tool==FillTool.Mesh;foreach(var item in pages)item.Value.Visible=item.Key==tool;
+        if(tool==FillTool.Mesh){meshPage.BringToFront();AcceptButton=accept;CancelButton=meshCancel;}
+        else{pages[tool].BringToFront();AcceptButton=pages[tool].Accept;CancelButton=pages[tool].Cancel;}}
+    FillSettings ReadTools(){var state=initialTools with{Tool=selectedTool,Mesh=Read()};foreach(var item in pages)state=state.WithPattern(item.Key,item.Value.Read());return state;}
+    void Finish(){var candidate=ReadTools();if(candidate.Validate()!=null)return;ToolSettings=candidate;Settings=candidate.Mesh;DialogResult=DialogResult.OK;Close();}
     MeshSettings Read()=>new((double)numbers["width"].Value,(double)numbers["height"].Value,(double)numbers["wire"].Value,
         (double)numbers["lace"].Value,(double)numbers["gap"].Value,(double)numbers["angle"].Value,mode.SelectedIndex==1,corners.Checked,
         (double)numbers["sleeveL"].Value,(double)numbers["sleeveH"].Value,(int)numbers["stops"].Value,SelectedProduct?.Reference??"");
